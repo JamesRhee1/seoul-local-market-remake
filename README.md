@@ -42,15 +42,26 @@ API 키나 대용량 데이터가 없어도, 저장소에 포함된 소형 샘�
 데이터는 다음 흐름으로 수집·가공되어 대시보드까지 연결됩니다.
 
 ```mermaid
-flowchart LR
-    A[서울 열린데이터 광장 API] --> B[collector.py]
-    B --> C[data/raw]
-    C --> D[preprocessor.py]
-    D --> E[data/processed]
-    E --> F[data_loader.py]
-    F --> G[metrics.py]
-    G --> H[charts.py]
-    H --> I[Streamlit 대시보드]
+flowchart TD
+    A["🌐 서울 열린데이터 광장 API<br/>(점포 · 위치 데이터)"]:::source
+    B["⬇️ collector.py<br/>데이터 수집"]:::collect
+    C["📁 data/raw<br/>수집 원본 CSV"]:::store
+    D["🧹 preprocessor.py<br/>병합 · 정제"]:::process
+    E["📦 data/processed<br/>분석용 데이터"]:::store
+    F["🔄 data_loader.py<br/>데이터 로딩 (없으면 샘플 폴백)"]:::load
+    G["📐 metrics.py<br/>KPI · 집계 계산"]:::analyze
+    H["📊 charts.py<br/>Plotly 차트 생성"]:::analyze
+    I["🖥️ Streamlit 대시보드<br/>app.py"]:::dashboard
+
+    A --> B --> C --> D --> E --> F --> G --> H --> I
+
+    classDef source fill:#E8F0FE,stroke:#4285F4,stroke-width:2px,color:#1a1a1a;
+    classDef collect fill:#E6F4EA,stroke:#34A853,stroke-width:2px,color:#1a1a1a;
+    classDef store fill:#FEF7E0,stroke:#FBBC04,stroke-width:2px,color:#1a1a1a;
+    classDef process fill:#FCE8E6,stroke:#EA4335,stroke-width:2px,color:#1a1a1a;
+    classDef load fill:#F3E8FD,stroke:#A142F4,stroke-width:2px,color:#1a1a1a;
+    classDef analyze fill:#E0F7FA,stroke:#00ACC1,stroke-width:2px,color:#1a1a1a;
+    classDef dashboard fill:#212121,stroke:#000000,stroke-width:2px,color:#ffffff;
 ```
 
 - `collector.py` 가 API에서 점포(Fact)·위치(Dimension) 데이터를 수집해 `data/raw` 에 저장합니다.
