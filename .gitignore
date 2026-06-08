@@ -1,0 +1,31 @@
+# --- 환경 변수 / 비밀 ---
+.env
+.env.*
+!.env.example
+
+# --- 데이터 (대용량 원천/가공 데이터는 추적하지 않음) ---
+data/raw/*
+data/processed/*
+# 단, 디렉토리 구조와 데모용 샘플은 유지
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/sample/
+data/**/*.parquet
+
+# --- 파이썬 ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- 가상환경 ---
+.venv/
+venv/
+env/
+
+# --- OS / 에디터 ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
