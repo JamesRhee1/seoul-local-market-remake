@@ -7,6 +7,10 @@
 
 서울시 열린데이터 광장의 상권 데이터를 **수집 → 전처리 → 분석 → 시각화**하는 Streamlit 대시보드 프로젝트입니다.
 
+<p align="center">
+  <img src="docs/architecture.png" alt="서울시 상권 데이터 분석 대시보드 — 데이터 파이프라인 & 아키텍처" width="100%">
+</p>
+
 ---
 
 ## 프로젝트 개요
@@ -37,9 +41,25 @@ API 키나 대용량 데이터가 없어도, 저장소에 포함된 소형 샘�
 
 ---
 
-## 데이터 파이프라인
+## 데이터 파이프라인 & 시스템 아키텍처
 
-데이터는 다음 흐름으로 수집·가공되어 대시보드까지 연결됩니다.
+데이터는 **외부 API → ETL → CSV 저장소 → 분석 → Streamlit UI** 순으로 흐릅니다.
+DB 없이 CSV 파일만 사용하며, `src/` 패키지로 각 단계가 분리되어 있습니다.
+
+상단 아키텍처 다이어그램은 프로젝트 전체 구조를 5개 계층으로 정리한 것입니다.
+
+| 계층 | 색상 | 구성 요소 | 역할 |
+|---|---|---|---|
+| **외부** | 파란색 | 사용자, 개발자, 서울 열린데이터 광장 API, `.env` | 브라우저·CLI 접점과 외부 데이터·인증 제공 |
+| **ETL 파이프라인** | 초록색 | `collector.py`, `preprocessor.py`, `utils.py`, `config.py` | API 수집, Star Schema 병합(`TRDAR_CD`), 전처리 |
+| **데이터 저장소** | 노란색 | `data/raw/`, `data/processed/`, `data/sample/` | CSV 기반 저장. processed 우선, 없으면 sample 폴백 |
+| **분석** | 청록색 | `data_loader.py`, `metrics.py`, `charts.py`, `report.py` | 로딩, KPI·집계, Plotly 차트, README 인사이트 |
+| **표현/UI** | 검정 | `app.py` (Streamlit) | 사이드바 필터, KPI 카드, 차트, 원본 데이터 테이블 |
+
+- **실선 화살표**: API → 수집 → 전처리 → 분석 → 대시보드로 이어지는 주 데이터 흐름
+- **점선 화살표**: `data/sample/` 폴백 경로, `report.py` 선택적 README 갱신
+
+### 상세 흐름 (Mermaid)
 
 ```mermaid
 flowchart TD
@@ -98,6 +118,7 @@ seoul-local-market-remake/
 │   ├── test_preprocessor.py
 │   └── test_report.py
 └── docs/
+    ├── architecture.png      # 시스템 아키텍처 인포그래픽
     └── project_notes.md
 ```
 
@@ -253,7 +274,7 @@ pytest
 
 ## 향후 개선 과제
 
-- 대시보드 스크린샷 추가
+- 대시보드 UI 스크린샷 추가 (시스템 아키텍처 다이어그램은 `docs/architecture.png` 참고)
 - GitHub Actions 기반 테스트 자동화
 - 실제 데이터 기반 분석 리포트 추가
 - 지도 시각화 추가
