@@ -7,10 +7,6 @@
 
 서울시 열린데이터 광장의 상권 데이터를 **수집 → 전처리 → 분석 → 시각화**하는 Streamlit 대시보드 프로젝트입니다.
 
-<p align="center">
-  <img src="docs/architecture.png" alt="서울시 상권 데이터 분석 대시보드 — 데이터 파이프라인 & 아키텍처" width="100%">
-</p>
-
 ---
 
 ## 프로젝트 개요
@@ -41,12 +37,62 @@ API 키나 대용량 데이터가 없어도, 저장소에 포함된 소형 샘�
 
 ---
 
+## 설치 및 실행 방법
+
+### Linux / macOS
+
+```bash
+git clone https://github.com/JamesRhee1/seoul-local-market-remake.git
+cd seoul-local-market-remake
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+### Windows PowerShell
+
+```powershell
+git clone https://github.com/JamesRhee1/seoul-local-market-remake.git
+cd seoul-local-market-remake
+
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+가공 데이터가 없으면 대시보드는 자동으로 `data/sample/` 의 샘플 데이터로 실행됩니다.
+
+---
+
+## 대시보드 활용 예시
+
+대시보드를 통해 다음과 같은 질문을 탐색할 수 있습니다.
+
+- 특정 자치구의 상권 규모(점포 수)는 어느 정도인가?
+- 업종별 점포 수는 어떻게 다른가?
+- 자치구별 개업/폐업 흐름은 어떻게 다른가?
+- 특정 업종을 선택했을 때 자치구별 경쟁 강도는 어떻게 나타나는가?
+- 샘플 데이터와 실제 가공 데이터를 바꿔가며 대시보드를 테스트할 수 있는가?
+
+사이드바에서 업종과 자치구를 선택하면 KPI 카드와 자치구별 개업/폐업 차트가 함께 갱신됩니다.
+
+---
+
 ## 데이터 파이프라인 & 시스템 아키텍처
 
 데이터는 **외부 API → ETL → CSV 저장소 → 분석 → Streamlit UI** 순으로 흐릅니다.
 DB 없이 CSV 파일만 사용하며, `src/` 패키지로 각 단계가 분리되어 있습니다.
 
-상단 아키텍처 다이어그램은 프로젝트 전체 구조를 5개 계층으로 정리한 것입니다.
+<p align="center">
+  <img src="docs/architecture.png" alt="서울시 상권 데이터 분석 대시보드 — 데이터 파이프라인 & 아키텍처" width="100%">
+</p>
+
+다이어그램은 프로젝트 전체 구조를 5개 계층으로 정리한 것입니다.
 
 | 계층 | 색상 | 구성 요소 | 역할 |
 |---|---|---|---|
@@ -124,38 +170,6 @@ seoul-local-market-remake/
 
 ---
 
-## 설치 및 실행 방법
-
-### Linux / macOS
-
-```bash
-git clone https://github.com/JamesRhee1/seoul-local-market-remake.git
-cd seoul-local-market-remake
-
-python3 -m venv .venv
-source .venv/bin/activate
-
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-### Windows PowerShell
-
-```powershell
-git clone https://github.com/JamesRhee1/seoul-local-market-remake.git
-cd seoul-local-market-remake
-
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-가공 데이터가 없으면 대시보드는 자동으로 `data/sample/` 의 샘플 데이터로 실행됩니다.
-
----
-
 ## 환경변수 설정
 
 `.env.example` 을 `.env` 로 복사한 뒤 필요한 값을 입력합니다.
@@ -221,20 +235,6 @@ API 키 필요 여부는 다음과 같습니다.
 
 - **Fact**: `VwsmTrdarStorQq` (상권-점포: 점포 수, 개업/폐업 수)
 - **Dimension**: `TbgisTrdarRelm` (상권 영역 → 자치구 `SIGNGU_CD_NM`)
-
----
-
-## 대시보드 활용 예시
-
-대시보드를 통해 다음과 같은 질문을 탐색할 수 있습니다.
-
-- 특정 자치구의 상권 규모(점포 수)는 어느 정도인가?
-- 업종별 점포 수는 어떻게 다른가?
-- 자치구별 개업/폐업 흐름은 어떻게 다른가?
-- 특정 업종을 선택했을 때 자치구별 경쟁 강도는 어떻게 나타나는가?
-- 샘플 데이터와 실제 가공 데이터를 바꿔가며 대시보드를 테스트할 수 있는가?
-
-사이드바에서 업종과 자치구를 선택하면 KPI 카드와 자치구별 개업/폐업 차트가 함께 갱신됩니다.
 
 ---
 
