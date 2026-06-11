@@ -95,7 +95,14 @@ def aggregate_for_map(
     required = [COLS.TRDAR_CD, COLS.LAT, COLS.LON, COLS.STORE_CO]
     if filtered.empty or any(c not in filtered.columns for c in required):
         return pd.DataFrame(
-            columns=[COLS.TRDAR_CD, COLS.TRDAR_CD_NM, COLS.DISTRICT, COLS.LAT, COLS.LON, COLS.STORE_CO]
+            columns=[
+                COLS.TRDAR_CD,
+                COLS.TRDAR_CD_NM,
+                COLS.DISTRICT,
+                COLS.LAT,
+                COLS.LON,
+                COLS.STORE_CO,
+            ]
         )
     group_cols = [COLS.TRDAR_CD, COLS.LAT, COLS.LON]
     if COLS.TRDAR_CD_NM in filtered.columns:

@@ -32,6 +32,8 @@ API 키나 대용량 데이터가 없어도, 저장소에 포함된 소형 샘�
 - 총 점포 수 / 개업 / 폐업 KPI 카드 표시
 - 업종 및 자치구 기준 필터링
 - 자치구별 개업 vs 폐업 Plotly 막대그래프 시각화
+- **업종별 분기 추이** 라인 차트 (다분기 스냅샷 축적 시)
+- **상권 단위 점포 밀도** pydeck 지도 (수집·전처리 데이터)
 - 원본 데이터 테이블 조회
 - KPI·집계 등 지표 계산 로직 모듈화 (순수 함수)
 - `pytest` 기반 단위 테스트 지원
@@ -78,6 +80,53 @@ python run_pipeline.py
 
 - `SEOUL_API_KEY` 가 설정되어 있으면 수집부터, 없으면 수집을 건너뛰고 기존 데이터로 진행합니다.
 - 각 단계는 `python -m src.collector`, `python -m src.preprocessor`, `python -m src.report` 로 개별 실행할 수도 있습니다.
+- `TARGET_QUARTER` 를 바꿔가며 파이프라인을 반복 실행하면 `data/processed/seoul_market_*.parquet` 에 분기별 스냅샷이 축적되어 **분기 추이** 탭에서 비교할 수 있습니다.
+
+---
+
+## Streamlit Community Cloud 배포
+
+이 저장소는 [Streamlit Community Cloud](https://streamlit.io/cloud) 배포를 전제로 구성되어 있습니다.
+**대시보드 데모만** 올릴 경우 API 키 없이 `data/sample/` 폴백으로 동작합니다.
+
+### 배포 절차
+
+1. GitHub 저장소를 Streamlit Cloud 에 연결합니다.
+2. **Main file path** 를 `app.py` 로 지정합니다.
+3. **Python version** 을 `3.11` 이상으로 맞춥니다 (`requirements.txt` 기준).
+4. (선택) 앱 **Settings → Secrets** 에 아래 형식으로 시크릿을 등록합니다.
+
+### Secrets 예시 (`secrets.toml`)
+
+Streamlit Cloud 콘솔의 Secrets 편집기에 TOML 형식으로 입력합니다.
+**`.env` 파일은 Git에 올리지 마세요.** 로컬 개발용으로만 사용합니다.
+
+```toml
+# 서울 열린데이터 광장 인증키 (Cloud 에서 수집 파이프라인을 돌릴 때만 필요)
+SEOUL_API_KEY = "your_key_here"
+
+# (선택) 수집 상한
+COLLECT_LIMIT = "20000"
+
+# (선택) 특정 분기만 수집
+TARGET_QUARTER = "20261"
+```
+
+| 항목 | 로컬 | Streamlit Cloud |
+|---|---|---|
+| API 키 | `.env` 의 `SEOUL_API_KEY` | Secrets 의 `SEOUL_API_KEY` |
+| 데모 실행 | `data/sample/` 폴백 | 동일 (저장소에 포함) |
+| 가공 데이터 | `data/processed/` (Git 제외) | Cloud 빌드에 없음 → 샘플 폴백 |
+| 분기 추이·지도 | processed 재생성 후 사용 | 샘플만으로는 추이/지도 제한적 |
+
+> **권장:** Community Cloud 앱은 **대시보드 전시용**으로 두고, 데이터 수집·전처리(`run_pipeline.py`)는 로컬 또는 CI/스케줄러에서 실행한 뒤 `data/processed` 를 별도 스토리지로 관리하는 방식이 안전합니다. processed 를 Cloud 에 포함시키려면 Git LFS·외부 스토리지 연동 등 추가 설계가 필요합니다.
+
+### 배포 전 점검 체크리스트
+
+- [ ] `requirements.txt` 에 `streamlit`, `pyarrow`, `pydeck`, `pyproj` 포함
+- [ ] `app.py` 가 저장소 루트에 있음
+- [ ] `.env` / 실제 API 키가 Git에 커밋되지 않음 (`.gitignore` 확인)
+- [ ] `pytest` / `ruff check` 로컬 통과 (CI 워크플로 동일)
 
 ---
 
@@ -219,10 +268,17 @@ seoul-local-market-remake/
 │   ├── data_loader.py      # 가공/샘플 데이터 로딩
 │   ├── metrics.py          # KPI/집계 (순수 함수)
 │   ├── charts.py           # Plotly 차트 생성
+│   ├── maps.py             # pydeck 지도
+│   ├── storage.py          # Parquet/CSV I/O
+│   ├── geo.py              # TM→WGS84 좌표 변환
 │   └── report.py           # 리포트/인사이트 생성
+├── run_pipeline.py         # 수집→전처리→리포트 오케스트레이터
 ├── tests/
 │   ├── test_metrics.py
 │   ├── test_preprocessor.py
+│   ├── test_charts.py
+│   ├── test_data_loader.py
+│   ├── test_storage.py
 │   └── test_report.py
 └── docs/
     ├── architecture.png      # 시스템 아키텍처 인포그래픽
@@ -269,7 +325,7 @@ API 키 필요 여부는 다음과 같습니다.
 | 디렉토리 | 역할 | Git 추적 |
 |---|---|---|
 | `data/raw` | API에서 수집한 원본 데이터 | 제외 |
-| `data/processed` | 병합·정제된 분석용 데이터 | 제외 |
+| `data/processed` | 병합·정제된 분석용 데이터 (Parquet, 분기 스냅샷) | 제외 |
 | `data/sample` | GitHub에 포함되는 소형 데모 데이터 | 포함 |
 
 - `data/sample` 은 누구나 클론 직후 대시보드를 체험할 수 있도록 포함된 소형 데이터입니다.
@@ -290,7 +346,11 @@ API 키 필요 여부는 다음과 같습니다.
 | `src/data_loader.py` | 가공/샘플 데이터 로딩 및 폴백 |
 | `src/metrics.py` | KPI와 집계 지표 계산 (순수 함수) |
 | `src/charts.py` | Plotly 차트 생성 |
+| `src/maps.py` | pydeck 점포 밀도 지도 |
+| `src/storage.py` | Parquet 저장·CSV 폴백 읽기 |
+| `src/geo.py` | 상권 TM 좌표 → WGS84 변환 |
 | `src/report.py` | 리포트/인사이트 생성 |
+| `run_pipeline.py` | 수집→전처리→README 갱신 일괄 실행 |
 
 데이터 스키마는 상권 코드(`TRDAR_CD`)를 조인 키로 하는 단순 Star Schema 구조입니다.
 
@@ -344,8 +404,6 @@ GitHub Actions(`.github/workflows/ci.yml`)에서 push/PR 마다 Python 3.11/3.12
 ## 향후 개선 과제
 
 - 대시보드 UI 스크린샷 추가 (시스템 아키텍처 다이어그램은 `docs/architecture.png` 참고)
-- GitHub Actions 기반 테스트 자동화
-- 실제 데이터 기반 분석 리포트 추가
-- 지도 시각화 추가
-- 배포 환경 구성
-- 데이터 수집 스케줄링
+- Cloud 배포 시 processed 데이터 외부 스토리지 연동
+- 데이터 수집 스케줄링 (분기별 자동 스냅샷)
+- 자치구 단위 choropleth 지도 (GeoJSON 경계 데이터 연동)

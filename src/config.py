@@ -53,8 +53,23 @@ MAX_RETRIES = 3
 RETRY_BACKOFF = 1.5         # 초 (지수 백오프 기준값)
 
 
+def _read_str_setting(key: str, default: str = "") -> str:
+    """환경변수(.env) 또는 Streamlit Secrets 에서 문자열 설정을 읽는다."""
+    val = os.getenv(key, "").strip()
+    if val:
+        return val
+    try:
+        import streamlit as st
+
+        if key in st.secrets:
+            return str(st.secrets[key]).strip()
+    except Exception:
+        pass
+    return default
+
+
 def _read_int_env(key: str, default: int) -> int:
-    raw = os.getenv(key, "").strip()
+    raw = _read_str_setting(key, "")
     if not raw:
         return default
     try:
@@ -63,10 +78,10 @@ def _read_int_env(key: str, default: int) -> int:
         return default
 
 
-SEOUL_API_KEY = os.getenv("SEOUL_API_KEY", "").strip()
+SEOUL_API_KEY = _read_str_setting("SEOUL_API_KEY", "")
 COLLECT_LIMIT = _read_int_env("COLLECT_LIMIT", 20000)
 # 기준 년분기 코드 (예: 20261 = 2026년 1분기). 비우면 전체 분기 수집.
-TARGET_QUARTER = os.getenv("TARGET_QUARTER", "").strip()
+TARGET_QUARTER = _read_str_setting("TARGET_QUARTER", "")
 
 # 키가 없거나 플레이스홀더면 미설정으로 간주
 _PLACEHOLDERS = {"", "YOUR_ACCESS_KEY_HERE", "여기에_인증키를_입력하세요"}

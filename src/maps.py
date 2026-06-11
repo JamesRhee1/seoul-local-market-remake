@@ -1,8 +1,8 @@
 """pydeck 지도 시각화."""
 from __future__ import annotations
 
-import pydeck as pdk
 import pandas as pd
+import pydeck as pdk
 
 from . import config
 
@@ -12,7 +12,12 @@ COLS = config.COLS
 def store_density_deck(map_df: pd.DataFrame, title: str = "") -> pdk.Deck:
     """상권 단위 점포 수를 ScatterplotLayer 로 표시한다."""
     if map_df.empty:
-        return pdk.Deck(layers=[], initial_view_state=pdk.ViewState(latitude=37.5665, longitude=126.9780, zoom=10))
+        return pdk.Deck(
+            layers=[],
+            initial_view_state=pdk.ViewState(
+                latitude=37.5665, longitude=126.9780, zoom=10
+            ),
+        )
 
     plot_df = map_df.copy()
     max_stores = max(plot_df[COLS.STORE_CO].max(), 1)
