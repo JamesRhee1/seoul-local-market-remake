@@ -67,3 +67,40 @@ def district_options(df: pd.DataFrame) -> List[str]:
     if COLS.DISTRICT not in df.columns:
         return []
     return sorted(df[COLS.DISTRICT].astype(str).unique().tolist())
+
+
+def quarter_options(df: pd.DataFrame) -> List[str]:
+    """선택 가능한 분기 코드 목록(정렬)."""
+    if COLS.QUARTER not in df.columns:
+        return []
+    return sorted(df[COLS.QUARTER].astype(str).dropna().unique().tolist())
+
+
+def filter_latest_quarter(df: pd.DataFrame) -> pd.DataFrame:
+    """여러 분기가 섞여 있으면 최신 분기만 남긴다 (순수 함수)."""
+    quarters = quarter_options(df)
+    if not quarters:
+        return df
+    latest = quarters[-1]
+    return df[df[COLS.QUARTER].astype(str) == latest].copy()
+
+
+def aggregate_industry_by_quarter(
+    df: pd.DataFrame,
+    industry: Optional[str] = None,
+    districts: Optional[List[str]] = None,
+) -> pd.DataFrame:
+    """업종·자치구 조건으로 필터링한 뒤 분기별 점포/개업/폐업 합계를 집계한다."""
+    filtered = filter_data(df, industry=industry, districts=districts)
+    if filtered.empty or COLS.QUARTER not in filtered.columns:
+        return pd.DataFrame(
+            columns=[COLS.QUARTER, COLS.STORE_CO, COLS.OPEN_CO, COLS.CLOSE_CO]
+        )
+    return (
+        filtered.groupby(filtered[COLS.QUARTER].astype(str))[
+            [COLS.STORE_CO, COLS.OPEN_CO, COLS.CLOSE_CO]
+        ]
+        .sum()
+        .reset_index()
+        .sort_values(COLS.QUARTER)
+    )

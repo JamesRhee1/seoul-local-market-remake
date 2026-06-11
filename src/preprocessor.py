@@ -57,6 +57,16 @@ def build_dimension(location_df: pd.DataFrame) -> pd.DataFrame:
     return dim.drop_duplicates(subset=[COLS.TRDAR_CD], keep="first")
 
 
+def split_by_quarter(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """분기 컬럼 기준으로 데이터프레임을 분할한다 (순수 함수)."""
+    if COLS.QUARTER not in df.columns:
+        return {}
+    out: dict[str, pd.DataFrame] = {}
+    for quarter, grp in df.groupby(df[COLS.QUARTER].astype(str)):
+        out[str(quarter)] = grp.reset_index(drop=True)
+    return out
+
+
 def merge_market_data(store_df: pd.DataFrame, location_df: pd.DataFrame) -> pd.DataFrame:
     """점포(Fact)에 위치 차원을 Left Join 하고 수치형을 정제한다."""
     fact = store_df.copy()
@@ -98,9 +108,30 @@ def run() -> Path | None:
 
     merged = merge_market_data(store_df, location_df)
 
-    config.PROCESSED_FILE.parent.mkdir(parents=True, exist_ok=True)
-    merged.to_csv(config.PROCESSED_FILE, index=False, encoding="utf-8-sig")
-    logger.info("전처리 완료: %s (%d행)", config.PROCESSED_FILE, len(merged))
+    config.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    for quarter, qdf in split_by_quarter(merged).items():
+        qpath = config.processed_quarter_path(quarter)
+        qdf.to_csv(qpath, index=False, encoding="utf-8-sig")
+        logger.info("분기 스냅샷 저장: %s (%d행)", qpath.name, len(qdf))
+
+    quarter_files = sorted(
+        config.PROCESSED_DIR.glob(f"{config.QUARTER_FILE_PREFIX}*.csv")
+    )
+    if quarter_files:
+        combined = pd.concat(
+            (pd.read_csv(p, low_memory=False) for p in quarter_files),
+            ignore_index=True,
+        )
+        combined.to_csv(config.PROCESSED_FILE, index=False, encoding="utf-8-sig")
+        logger.info(
+            "전처리 완료: %s (%d행, 분기 %d개)",
+            config.PROCESSED_FILE,
+            len(combined),
+            len(quarter_files),
+        )
+    else:
+        merged.to_csv(config.PROCESSED_FILE, index=False, encoding="utf-8-sig")
+        logger.info("전처리 완료: %s (%d행)", config.PROCESSED_FILE, len(merged))
 
     # README 인사이트 갱신은 run_pipeline.py 오케스트레이터가 담당한다.
     # (전처리 모듈이 report 에 의존하면 단계 간 결합이 생기므로 분리)

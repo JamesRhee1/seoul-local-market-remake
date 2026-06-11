@@ -8,7 +8,7 @@ from __future__ import annotations
 import pandas as pd
 
 from src import config
-from src.charts import district_open_close_bar
+from src.charts import district_open_close_bar, industry_trend_line
 
 COLS = config.COLS
 
@@ -35,3 +35,21 @@ def test_bar_chart_has_open_close_traces():
 def test_bar_chart_x_axis_is_district():
     fig = district_open_close_bar(_district_df())
     assert set(fig.data[0].x) == {"강남구", "마포구"}
+
+
+def _trend_df():
+    return pd.DataFrame(
+        {
+            COLS.QUARTER: ["20254", "20261"],
+            COLS.STORE_CO: [100, 120],
+            COLS.OPEN_CO: [10, 15],
+            COLS.CLOSE_CO: [5, 8],
+        }
+    )
+
+
+def test_trend_line_has_three_series():
+    fig = industry_trend_line(_trend_df(), title="추이")
+    assert len(fig.data) == 3
+    assert {t.name for t in fig.data} == {"총 점포", "개업", "폐업"}
+    assert fig.layout.title.text == "추이"

@@ -3,10 +3,13 @@ import pandas as pd
 from src import config
 from src.metrics import (
     aggregate_by_district,
+    aggregate_industry_by_quarter,
     compute_kpi,
     district_options,
     filter_data,
+    filter_latest_quarter,
     industry_options,
+    quarter_options,
 )
 
 COLS = config.COLS
@@ -57,3 +60,33 @@ def test_aggregate_by_district():
 def test_options_sorted_unique():
     assert industry_options(_df()) == sorted(["커피-음료", "한식음식점"])
     assert district_options(_df()) == sorted(["강남구", "중구"])
+
+
+def _quarter_df():
+    return pd.DataFrame(
+        {
+            COLS.QUARTER: ["20254", "20254", "20261", "20261"],
+            COLS.INDUSTRY: ["커피-음료", "한식음식점", "커피-음료", "커피-음료"],
+            COLS.DISTRICT: ["중구", "중구", "강남구", "강남구"],
+            COLS.STORE_CO: [10, 5, 20, 15],
+            COLS.OPEN_CO: [2, 1, 4, 3],
+            COLS.CLOSE_CO: [1, 0, 2, 1],
+        }
+    )
+
+
+def test_quarter_options_sorted():
+    assert quarter_options(_quarter_df()) == ["20254", "20261"]
+
+
+def test_filter_latest_quarter_keeps_newest():
+    out = filter_latest_quarter(_quarter_df())
+    assert set(out[COLS.QUARTER].astype(str)) == {"20261"}
+    assert len(out) == 2
+
+
+def test_aggregate_industry_by_quarter():
+    agg = aggregate_industry_by_quarter(_quarter_df(), industry="커피-음료")
+    assert agg[COLS.QUARTER].tolist() == ["20254", "20261"]
+    assert agg[COLS.STORE_CO].tolist() == [10, 35]
+    assert agg[COLS.OPEN_CO].tolist() == [2, 7]

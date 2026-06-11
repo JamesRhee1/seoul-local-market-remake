@@ -2,7 +2,13 @@ import pandas as pd
 import pytest
 
 from src import config
-from src.preprocessor import build_dimension, clean_numeric, merge_market_data, validate_schema
+from src.preprocessor import (
+    build_dimension,
+    clean_numeric,
+    merge_market_data,
+    split_by_quarter,
+    validate_schema,
+)
 
 COLS = config.COLS
 
@@ -55,6 +61,19 @@ def test_validate_schema_raises_with_missing_cols():
     # 누락된 컬럼명이 에러 메시지에 모두 나타나야 디버깅이 쉽다
     assert COLS.STORE_CO in str(exc.value)
     assert COLS.OPEN_CO in str(exc.value)
+
+
+def test_split_by_quarter_groups_rows():
+    df = pd.DataFrame(
+        {
+            COLS.QUARTER: [20254, 20254, 20261],
+            COLS.TRDAR_CD: [1, 2, 3],
+        }
+    )
+    parts = split_by_quarter(df)
+    assert set(parts) == {"20254", "20261"}
+    assert len(parts["20254"]) == 2
+    assert len(parts["20261"]) == 1
 
 
 def test_merge_attaches_district_and_handles_unknown():

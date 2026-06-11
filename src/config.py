@@ -29,6 +29,14 @@ RAW_LOCATION_FILE = RAW_DIR / "seoul_market_location.csv"
 PROCESSED_FILE = PROCESSED_DIR / "seoul_market_final.csv"
 SAMPLE_FILE = SAMPLE_DIR / "seoul_market_sample.csv"
 
+# 분기별 스냅샷 파일명 접두사 (예: seoul_market_20261.csv)
+QUARTER_FILE_PREFIX = "seoul_market_"
+
+
+def processed_quarter_path(quarter: str) -> Path:
+    """분기 코드에 대응하는 processed 스냅샷 경로."""
+    return PROCESSED_DIR / f"{QUARTER_FILE_PREFIX}{quarter}.csv"
+
 # -----------------------------------------------------------------------------
 # 서울 열린데이터 광장 API
 # -----------------------------------------------------------------------------

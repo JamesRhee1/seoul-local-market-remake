@@ -69,37 +69,72 @@ def main() -> None:
         "자치구 (미선택 시 전체)", metrics.district_options(df), default=[]
     )
 
-    filtered = metrics.filter_data(df, industry=selected_industry, districts=selected_districts)
+    snapshot_df = metrics.filter_latest_quarter(df)
+    filtered = metrics.filter_data(
+        snapshot_df, industry=selected_industry, districts=selected_districts
+    )
 
-    # --- KPI ---
-    st.subheader(f"'{selected_industry}' 상권 현황")
-    kpi = metrics.compute_kpi(filtered)
-    c1, c2, c3 = st.columns(3)
-    c1.metric("총 점포 수", f"{kpi.total_stores:,}개")
-    c2.metric("신규 개업", f"{kpi.total_open:,}개", delta=kpi.total_open)
-    c3.metric("폐업", f"{kpi.total_close:,}개", delta=-kpi.total_close, delta_color="inverse")
+    tab_snapshot, tab_trend = st.tabs(["📊 현황 분석", "📈 업종별 분기 추이"])
 
-    st.divider()
+    with tab_snapshot:
+        quarters = metrics.quarter_options(snapshot_df)
+        if quarters:
+            st.caption(f"기준 분기: **{quarters[-1]}** (최신 분기 스냅샷)")
 
-    # --- 차트 ---
-    st.subheader("📊 자치구별 개업 vs 폐업")
-    district_df = metrics.aggregate_by_district(filtered)
-    if district_df.empty:
-        st.warning("조건에 해당하는 데이터가 없습니다.")
-    else:
-        fig = charts.district_open_close_bar(
-            district_df, title=f"{selected_industry} 자치구별 현황"
+        st.subheader(f"'{selected_industry}' 상권 현황")
+        kpi = metrics.compute_kpi(filtered)
+        c1, c2, c3 = st.columns(3)
+        c1.metric("총 점포 수", f"{kpi.total_stores:,}개")
+        c2.metric("신규 개업", f"{kpi.total_open:,}개", delta=kpi.total_open)
+        c3.metric("폐업", f"{kpi.total_close:,}개", delta=-kpi.total_close, delta_color="inverse")
+
+        st.divider()
+
+        st.subheader("📊 자치구별 개업 vs 폐업")
+        district_df = metrics.aggregate_by_district(filtered)
+        if district_df.empty:
+            st.warning("조건에 해당하는 데이터가 없습니다.")
+        else:
+            fig = charts.district_open_close_bar(
+                district_df, title=f"{selected_industry} 자치구별 현황"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        with st.expander("📄 원본 데이터 보기"):
+            view_cols = [
+                c
+                for c in [
+                    COLS.TRDAR_CD_NM,
+                    COLS.DISTRICT,
+                    COLS.STORE_CO,
+                    COLS.OPEN_CO,
+                    COLS.CLOSE_CO,
+                ]
+                if c in filtered.columns
+            ]
+            st.dataframe(filtered[view_cols], use_container_width=True)
+
+    with tab_trend:
+        trend_df = data_loader.load_quarter_trend_data()
+        trend_filtered = metrics.aggregate_industry_by_quarter(
+            trend_df, industry=selected_industry, districts=selected_districts
         )
-        st.plotly_chart(fig, use_container_width=True)
+        n_quarters = len(trend_filtered)
 
-    # --- 원본 데이터 ---
-    with st.expander("📄 원본 데이터 보기"):
-        view_cols = [
-            c
-            for c in [COLS.TRDAR_CD_NM, COLS.DISTRICT, COLS.STORE_CO, COLS.OPEN_CO, COLS.CLOSE_CO]
-            if c in filtered.columns
-        ]
-        st.dataframe(filtered[view_cols], use_container_width=True)
+        if n_quarters < 2:
+            st.info(
+                "분기 추이를 보려면 **2개 이상 분기** 데이터가 필요합니다.\n\n"
+                "`TARGET_QUARTER` 를 바꿔가며 `python run_pipeline.py` 를 여러 번 실행하면 "
+                "`data/processed/seoul_market_*.csv` 에 분기별로 축적됩니다."
+            )
+        if trend_filtered.empty:
+            st.warning("조건에 해당하는 분기 데이터가 없습니다.")
+        else:
+            fig = charts.industry_trend_line(
+                trend_filtered,
+                title=f"{selected_industry} 분기별 추이 ({n_quarters}개 분기)",
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
 
 # Streamlit 은 `streamlit run` 시 이 스크립트를 __main__ 으로 실행하므로
