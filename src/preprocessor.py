@@ -10,6 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from . import config
+from .geo import seoul_tm_to_wgs84
 from .storage import list_quarter_snapshots, read_table, resolve_existing, write_table
 from .utils import get_logger
 
@@ -49,13 +50,27 @@ def normalize_key(series: pd.Series) -> pd.Series:
 
 
 def build_dimension(location_df: pd.DataFrame) -> pd.DataFrame:
-    """위치 원천에서 (상권코드 → 자치구명) 차원 테이블을 만든다.
+    """위치 원천에서 상권코드별 차원 테이블(자치구·좌표)을 만든다.
 
-    상권코드당 자치구를 1개로 보장해 Left Join 시 행 증식(fan-out)을 방지한다.
+    상권코드당 1행을 보장해 Left Join 시 행 증식(fan-out)을 방지한다.
     """
-    dim = location_df[[COLS.TRDAR_CD, COLS.DISTRICT]].copy()
+    cols = [COLS.TRDAR_CD, COLS.DISTRICT]
+    for optional in (COLS.TRDAR_CD_NM, COLS.TM_X, COLS.TM_Y):
+        if optional in location_df.columns:
+            cols.append(optional)
+    dim = location_df[cols].copy()
     dim[COLS.TRDAR_CD] = normalize_key(dim[COLS.TRDAR_CD])
-    return dim.drop_duplicates(subset=[COLS.TRDAR_CD], keep="first")
+    dim = dim.drop_duplicates(subset=[COLS.TRDAR_CD], keep="first")
+
+    if COLS.TM_X in dim.columns and COLS.TM_Y in dim.columns:
+        coords = dim.apply(
+            lambda row: seoul_tm_to_wgs84(row[COLS.TM_X], row[COLS.TM_Y]),
+            axis=1,
+            result_type="expand",
+        )
+        dim[COLS.LON] = coords[0]
+        dim[COLS.LAT] = coords[1]
+    return dim
 
 
 def split_by_quarter(df: pd.DataFrame) -> dict[str, pd.DataFrame]:

@@ -85,6 +85,30 @@ def filter_latest_quarter(df: pd.DataFrame) -> pd.DataFrame:
     return df[df[COLS.QUARTER].astype(str) == latest].copy()
 
 
+def aggregate_for_map(
+    df: pd.DataFrame,
+    industry: Optional[str] = None,
+    districts: Optional[List[str]] = None,
+) -> pd.DataFrame:
+    """상권 단위 점포 밀도 집계 (지도용 좌표 포함)."""
+    filtered = filter_data(df, industry=industry, districts=districts)
+    required = [COLS.TRDAR_CD, COLS.LAT, COLS.LON, COLS.STORE_CO]
+    if filtered.empty or any(c not in filtered.columns for c in required):
+        return pd.DataFrame(
+            columns=[COLS.TRDAR_CD, COLS.TRDAR_CD_NM, COLS.DISTRICT, COLS.LAT, COLS.LON, COLS.STORE_CO]
+        )
+    group_cols = [COLS.TRDAR_CD, COLS.LAT, COLS.LON]
+    if COLS.TRDAR_CD_NM in filtered.columns:
+        group_cols.insert(1, COLS.TRDAR_CD_NM)
+    if COLS.DISTRICT in filtered.columns:
+        group_cols.append(COLS.DISTRICT)
+    return (
+        filtered.groupby(group_cols, as_index=False)[COLS.STORE_CO]
+        .sum()
+        .sort_values(COLS.STORE_CO, ascending=False)
+    )
+
+
 def aggregate_industry_by_quarter(
     df: pd.DataFrame,
     industry: Optional[str] = None,

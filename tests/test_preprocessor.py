@@ -30,6 +30,8 @@ def _location_df():
         {
             COLS.TRDAR_CD: [1001, 1001, 1002],  # 중복 포함
             COLS.DISTRICT: ["중구", "중구", "강남구"],
+            COLS.TM_X: [197093, 197093, 198000],
+            COLS.TM_Y: [453418, 453418, 454000],
         }
     )
 
@@ -43,6 +45,8 @@ def test_clean_numeric_coerces_and_fills():
 def test_build_dimension_dedupes():
     dim = build_dimension(_location_df())
     assert len(dim) == 2
+    assert COLS.LON in dim.columns
+    assert COLS.LAT in dim.columns
     # dtype 구현(object vs StringDtype)은 pandas 버전에 따라 달라지므로
     # "문자열 키"라는 동작 자체를 검증한다 (pandas 2/3 호환).
     assert pd.api.types.is_string_dtype(dim[COLS.TRDAR_CD])

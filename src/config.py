@@ -90,6 +90,10 @@ class Columns:
     OPEN_CO: str = "OPBIZ_STOR_CO"            # 개업 점포 수
     CLOSE_CO: str = "CLSBIZ_STOR_CO"          # 폐업 점포 수
     QUARTER: str = "STDR_YYQU_CD"             # 기준 년분기 코드 (예: 20261)
+    TM_X: str = "XCNTS_VALUE"                 # TM 좌표 X (위치 API)
+    TM_Y: str = "YDNTS_VALUE"                 # TM 좌표 Y (위치 API)
+    LON: str = "lon"                          # WGS84 경도 (전처리 시 생성)
+    LAT: str = "lat"                          # WGS84 위도 (전처리 시 생성)
 
 
 COLS = Columns()

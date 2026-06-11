@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from src import charts, config, data_loader, metrics
+from src import charts, config, data_loader, maps, metrics
 
 COLS = config.COLS
 
@@ -74,7 +74,9 @@ def main() -> None:
         snapshot_df, industry=selected_industry, districts=selected_districts
     )
 
-    tab_snapshot, tab_trend = st.tabs(["📊 현황 분석", "📈 업종별 분기 추이"])
+    tab_snapshot, tab_trend, tab_map = st.tabs(
+        ["📊 현황 분석", "📈 업종별 분기 추이", "🗺️ 점포 밀도 지도"]
+    )
 
     with tab_snapshot:
         quarters = metrics.quarter_options(snapshot_df)
@@ -135,6 +137,23 @@ def main() -> None:
                 title=f"{selected_industry} 분기별 추이 ({n_quarters}개 분기)",
             )
             st.plotly_chart(fig, use_container_width=True)
+
+    with tab_map:
+        map_df = metrics.aggregate_for_map(
+            snapshot_df, industry=selected_industry, districts=selected_districts
+        )
+        if map_df.empty or COLS.LAT not in map_df.columns:
+            st.info(
+                "지도를 표시하려면 **위치 좌표가 포함된 processed 데이터**가 필요합니다.\n\n"
+                "`python run_pipeline.py` 로 수집·전처리하면 상권 TM 좌표가 "
+                "WGS84 로 변환되어 지도에 표시됩니다."
+            )
+        else:
+            st.caption("상권 단위 점포 수 (원 크기 ∝ 점포 수)")
+            deck = maps.store_density_deck(
+                map_df, title=f"{selected_industry} 점포 밀도"
+            )
+            st.pydeck_chart(deck, use_container_width=True)
 
 
 # Streamlit 은 `streamlit run` 시 이 스크립트를 __main__ 으로 실행하므로

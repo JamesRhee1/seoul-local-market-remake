@@ -3,6 +3,7 @@ import pandas as pd
 from src import config
 from src.metrics import (
     aggregate_by_district,
+    aggregate_for_map,
     aggregate_industry_by_quarter,
     compute_kpi,
     district_options,
@@ -83,6 +84,23 @@ def test_filter_latest_quarter_keeps_newest():
     out = filter_latest_quarter(_quarter_df())
     assert set(out[COLS.QUARTER].astype(str)) == {"20261"}
     assert len(out) == 2
+
+
+def test_aggregate_for_map_sums_by_trdar():
+    df = pd.DataFrame(
+        {
+            COLS.TRDAR_CD: ["1001", "1001", "1002"],
+            COLS.TRDAR_CD_NM: ["A", "A", "B"],
+            COLS.DISTRICT: ["중구", "중구", "강남구"],
+            COLS.LAT: [37.57, 37.57, 37.50],
+            COLS.LON: [126.98, 126.98, 127.03],
+            COLS.INDUSTRY: ["커피-음료", "커피-음료", "커피-음료"],
+            COLS.STORE_CO: [5, 3, 10],
+        }
+    )
+    out = aggregate_for_map(df, industry="커피-음료")
+    assert len(out) == 2
+    assert out.loc[out[COLS.TRDAR_CD] == "1001", COLS.STORE_CO].iloc[0] == 8
 
 
 def test_aggregate_industry_by_quarter():
