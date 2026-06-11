@@ -36,7 +36,10 @@ def test_clean_numeric_coerces_and_fills():
 def test_build_dimension_dedupes():
     dim = build_dimension(_location_df())
     assert len(dim) == 2
-    assert dim[COLS.TRDAR_CD].dtype == object  # 문자열화됨
+    # dtype 구현(object vs StringDtype)은 pandas 버전에 따라 달라지므로
+    # "문자열 키"라는 동작 자체를 검증한다 (pandas 2/3 호환).
+    assert pd.api.types.is_string_dtype(dim[COLS.TRDAR_CD])
+    assert dim[COLS.TRDAR_CD].tolist() == ["1001", "1002"]
 
 
 def test_merge_attaches_district_and_handles_unknown():

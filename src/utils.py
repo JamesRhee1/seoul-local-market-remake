@@ -44,13 +44,42 @@ def fetch_json(url: str) -> Dict[str, Any]:
             return resp.json()
         except (requests.RequestException, ValueError) as exc:
             last_exc = exc
-            wait = config.RETRY_BACKOFF * attempt
-            logger.warning(
-                "요청 실패(%s/%s): %s | %s초 후 재시도",
-                attempt, config.MAX_RETRIES, _mask_key(url), wait,
-            )
-            time.sleep(wait)
+            # 마지막 시도 실패 후에는 재시도가 없으므로 대기 없이 바로 raise 한다.
+            if attempt < config.MAX_RETRIES:
+                wait = config.RETRY_BACKOFF * attempt
+                logger.warning(
+                    "요청 실패(%s/%s): %s | %s초 후 재시도",
+                    attempt, config.MAX_RETRIES, _mask_key(url), wait,
+                )
+                time.sleep(wait)
     raise RuntimeError(f"API 요청이 {config.MAX_RETRIES}회 모두 실패했습니다: {last_exc}")
+
+
+# 서울 열린데이터 광장 RESULT 코드: 정상 / 데이터 없음(오류 아님)
+_RESULT_OK = "INFO-000"
+_RESULT_NO_DATA = "INFO-200"
+
+
+def _is_no_data_or_raise(result: Dict[str, Any] | None) -> bool:
+    """API RESULT 블록을 검사한다.
+
+    서울 API는 인증키 오류 등도 HTTP 200으로 반환하므로, 상태코드만 믿으면
+    오류가 "0건 수집 완료"로 위장된다. CODE 를 직접 확인해 명시적으로 실패시킨다.
+
+    Returns:
+        True  → INFO-200 (데이터 없음): 빈 결과로 정상 종료
+        False → INFO-000 (정상) 또는 RESULT 없음: 계속 진행
+    Raises:
+        RuntimeError: 그 외 INFO-xxx / ERROR-xxx 오류 코드
+    """
+    if not result:
+        return False
+    code = str(result.get("CODE", ""))
+    if code == _RESULT_OK:
+        return False
+    if code.startswith(_RESULT_NO_DATA):
+        return True
+    raise RuntimeError(f"API 오류 응답: {code} — {result.get('MESSAGE', '')}")
 
 
 def paginate(
@@ -82,10 +111,20 @@ def paginate(
         payload = fetch_json(url)
 
         block = payload.get(service)
-        if not block or not block.get("row"):
+        if block is None:
+            # 서비스 블록이 없으면 최상위 RESULT 가 오류/데이터 없음을 알려준다.
+            if _is_no_data_or_raise(payload.get("RESULT")):
+                break  # 데이터 없음 → 빈 결과 정상 종료
+            raise RuntimeError(f"예상하지 못한 API 응답 형식입니다 (서비스 블록 없음): {service}")
+
+        # 서비스 블록 내부 RESULT 도 동일하게 검사 (페이지 범위 초과 등)
+        if _is_no_data_or_raise(block.get("RESULT")):
             break
 
-        rows = block["row"]
+        rows = block.get("row")
+        if not rows:
+            break
+
         yield rows
         collected += len(rows)
 
