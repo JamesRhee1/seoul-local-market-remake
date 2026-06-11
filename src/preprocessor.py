@@ -10,6 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from . import config
+from .storage import list_quarter_snapshots, read_table, resolve_existing, write_table
 from .utils import get_logger
 
 logger = get_logger(__name__)
@@ -92,15 +93,18 @@ def merge_market_data(store_df: pd.DataFrame, location_df: pd.DataFrame) -> pd.D
 
 def run() -> Path | None:
     """raw CSV 두 개를 읽어 전처리 후 data/processed 에 저장."""
-    if not config.RAW_STORE_FILE.exists() or not config.RAW_LOCATION_FILE.exists():
+    if (
+        resolve_existing(config.RAW_STORE_FILE) is None
+        or resolve_existing(config.RAW_LOCATION_FILE) is None
+    ):
         logger.error(
             "원천 데이터가 없습니다. collector 를 먼저 실행하세요 (%s, %s)",
             config.RAW_STORE_FILE.name, config.RAW_LOCATION_FILE.name,
         )
         return None
 
-    store_df = pd.read_csv(config.RAW_STORE_FILE, low_memory=False)
-    location_df = pd.read_csv(config.RAW_LOCATION_FILE, low_memory=False)
+    store_df = read_table(config.RAW_STORE_FILE)
+    location_df = read_table(config.RAW_LOCATION_FILE)
     logger.info("로드 완료: 점포 %d행, 위치 %d행", len(store_df), len(location_df))
 
     validate_schema(store_df, config.REQUIRED_STORE_COLS, "점포(store)")
@@ -111,27 +115,25 @@ def run() -> Path | None:
     config.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     for quarter, qdf in split_by_quarter(merged).items():
         qpath = config.processed_quarter_path(quarter)
-        qdf.to_csv(qpath, index=False, encoding="utf-8-sig")
-        logger.info("분기 스냅샷 저장: %s (%d행)", qpath.name, len(qdf))
+        saved = write_table(qdf, qpath)
+        logger.info("분기 스냅샷 저장: %s (%d행)", saved.name, len(qdf))
 
-    quarter_files = sorted(
-        config.PROCESSED_DIR.glob(f"{config.QUARTER_FILE_PREFIX}*.csv")
-    )
+    quarter_files = list_quarter_snapshots(config.PROCESSED_DIR, config.QUARTER_FILE_PREFIX)
     if quarter_files:
         combined = pd.concat(
-            (pd.read_csv(p, low_memory=False) for p in quarter_files),
+            (read_table(p.with_suffix(".csv")) for p in quarter_files),
             ignore_index=True,
         )
-        combined.to_csv(config.PROCESSED_FILE, index=False, encoding="utf-8-sig")
+        final = write_table(combined, config.PROCESSED_FILE)
         logger.info(
             "전처리 완료: %s (%d행, 분기 %d개)",
-            config.PROCESSED_FILE,
+            final,
             len(combined),
             len(quarter_files),
         )
     else:
-        merged.to_csv(config.PROCESSED_FILE, index=False, encoding="utf-8-sig")
-        logger.info("전처리 완료: %s (%d행)", config.PROCESSED_FILE, len(merged))
+        final = write_table(merged, config.PROCESSED_FILE)
+        logger.info("전처리 완료: %s (%d행)", final, len(merged))
 
     # README 인사이트 갱신은 run_pipeline.py 오케스트레이터가 담당한다.
     # (전처리 모듈이 report 에 의존하면 단계 간 결합이 생기므로 분리)

@@ -11,6 +11,7 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from . import config
+from .storage import write_table
 from .utils import get_logger, paginate
 
 logger = get_logger(__name__)
@@ -42,10 +43,9 @@ def _save(rows: List[Dict[str, Any]], path: Path) -> Path | None:
     if not rows:
         logger.warning("수집된 데이터가 없어 저장을 건너뜁니다: %s", path.name)
         return None
-    path.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(rows).to_csv(path, index=False, encoding="utf-8-sig")
-    logger.info("저장 완료: %s (%d행)", path, len(rows))
-    return path
+    saved = write_table(pd.DataFrame(rows), path)
+    logger.info("저장 완료: %s (%d행)", saved, len(rows))
+    return saved
 
 
 def collect_store_data(
