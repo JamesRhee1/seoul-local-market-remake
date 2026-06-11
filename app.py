@@ -52,7 +52,7 @@ def main() -> None:
         st.error(
             "표시할 데이터가 없습니다.\n\n"
             "1) `python -m src.collector` 로 수집 → `python -m src.preprocessor` 로 전처리하거나,\n"
-            "2) `data/sample/` 에 샘플 CSV 를 두고 다시 실행하세요."
+            "2) `python -m src.sample_data` 로 `data/sample/` 분기 샘플을 생성하세요."
         )
         st.stop()
 
@@ -81,7 +81,9 @@ def main() -> None:
     with tab_snapshot:
         quarters = metrics.quarter_options(snapshot_df)
         if quarters:
-            st.caption(f"기준 분기: **{quarters[-1]}** (최신 분기 스냅샷)")
+            st.caption(
+                f"기준 분기: **{metrics.format_quarter_label(quarters[-1])}** (최신 분기 스냅샷)"
+            )
 
         st.subheader(f"'{selected_industry}' 상권 현황")
         kpi = metrics.compute_kpi(filtered)
@@ -126,8 +128,9 @@ def main() -> None:
         if n_quarters < 2:
             st.info(
                 "분기 추이를 보려면 **2개 이상 분기** 데이터가 필요합니다.\n\n"
-                "`TARGET_QUARTER` 를 바꿔가며 `python run_pipeline.py` 를 여러 번 실행하면 "
-                "`data/processed/seoul_market_*.csv` 에 분기별로 축적됩니다."
+                "기준은 **2025년 1~4분기**(20251~20254)이며, `TARGET_QUARTER` 를 바꿔가며 "
+                "`python run_pipeline.py` 를 실행하거나 `python -m src.sample_data` 로 "
+                "`data/sample/seoul_market_*.parquet` 샘플을 생성하세요."
             )
         if trend_filtered.empty:
             st.warning("조건에 해당하는 분기 데이터가 없습니다.")
@@ -149,7 +152,10 @@ def main() -> None:
                 "WGS84 로 변환되어 지도에 표시됩니다."
             )
         else:
-            st.caption("상권 단위 점포 수 (원 크기 ∝ 점포 수)")
+            st.caption(
+                "상권 단위 점포 수 — 원 크기 ∝ 점포 수, "
+                "색상: 파랑(저밀도) → 노랑 → 빨강(고밀도)"
+            )
             deck = maps.store_density_deck(
                 map_df, title=f"{selected_industry} 점포 밀도"
             )

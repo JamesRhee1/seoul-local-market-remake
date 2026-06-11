@@ -27,15 +27,30 @@ SAMPLE_DIR = DATA_DIR / "sample"
 RAW_STORE_FILE = RAW_DIR / "seoul_market_store.csv"
 RAW_LOCATION_FILE = RAW_DIR / "seoul_market_location.csv"
 PROCESSED_FILE = PROCESSED_DIR / "seoul_market_final.csv"
-SAMPLE_FILE = SAMPLE_DIR / "seoul_market_sample.csv"
+SAMPLE_FILE = SAMPLE_DIR / "seoul_market_final.csv"
+# 구버전 단일 샘플 (하위 호환)
+SAMPLE_FILE_LEGACY = SAMPLE_DIR / "seoul_market_sample.csv"
 
-# 분기별 스냅샷 파일명 접두사 (예: seoul_market_20261.csv)
+# 분기별 스냅샷 파일명 접두사 (예: seoul_market_20254.parquet)
 QUARTER_FILE_PREFIX = "seoul_market_"
+
+# 데모·문서·샘플 데이터 기준 분기: 2025년 1~4분기
+DEMO_QUARTERS: tuple[str, ...] = ("20251", "20252", "20253", "20254")
+
+
+def quarter_snapshot_path(base_dir: Path, quarter: str) -> Path:
+    """분기 코드에 대응하는 스냅샷 논리 경로(.csv 기준)."""
+    return base_dir / f"{QUARTER_FILE_PREFIX}{quarter}.csv"
 
 
 def processed_quarter_path(quarter: str) -> Path:
-    """분기 코드에 대응하는 processed 스냅샷 경로."""
-    return PROCESSED_DIR / f"{QUARTER_FILE_PREFIX}{quarter}.csv"
+    """processed 디렉터리의 분기 스냅샷 경로."""
+    return quarter_snapshot_path(PROCESSED_DIR, quarter)
+
+
+def sample_quarter_path(quarter: str) -> Path:
+    """sample 디렉터리의 분기 스냅샷 경로."""
+    return quarter_snapshot_path(SAMPLE_DIR, quarter)
 
 # -----------------------------------------------------------------------------
 # 서울 열린데이터 광장 API
@@ -80,7 +95,7 @@ def _read_int_env(key: str, default: int) -> int:
 
 SEOUL_API_KEY = _read_str_setting("SEOUL_API_KEY", "")
 COLLECT_LIMIT = _read_int_env("COLLECT_LIMIT", 20000)
-# 기준 년분기 코드 (예: 20261 = 2026년 1분기). 비우면 전체 분기 수집.
+# 기준 년분기 코드 (예: 20254 = 2025년 4분기). 비우면 전체 분기 수집.
 TARGET_QUARTER = _read_str_setting("TARGET_QUARTER", "")
 
 # 키가 없거나 플레이스홀더면 미설정으로 간주
@@ -104,7 +119,7 @@ class Columns:
     STORE_CO: str = "STOR_CO"                 # 점포 수
     OPEN_CO: str = "OPBIZ_STOR_CO"            # 개업 점포 수
     CLOSE_CO: str = "CLSBIZ_STOR_CO"          # 폐업 점포 수
-    QUARTER: str = "STDR_YYQU_CD"             # 기준 년분기 코드 (예: 20261)
+    QUARTER: str = "STDR_YYQU_CD"             # 기준 년분기 코드 (예: 20254)
     TM_X: str = "XCNTS_VALUE"                 # TM 좌표 X (위치 API)
     TM_Y: str = "YDNTS_VALUE"                 # TM 좌표 Y (위치 API)
     LON: str = "lon"                          # WGS84 경도 (전처리 시 생성)

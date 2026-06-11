@@ -14,7 +14,7 @@ C = config.COLS
 def _df():
     return pd.DataFrame(
         {
-            C.QUARTER: [20261] * 6,
+            C.QUARTER: [20254] * 6,
             C.INDUSTRY: ["커피-음료", "커피-음료", "한식음식점", "편의점", "편의점", "일반의류"],
             C.DISTRICT: ["강남구", "서초구", "중구", "강남구", "마포구", "중구"],
             C.TRDAR_CD_NM: ["A", "B", "C", "D", "E", "F"],
@@ -67,12 +67,12 @@ def test_multi_quarter_uses_latest_only():
     과거 분기를 합산하면 개업/폐업 수가 부풀어 왜곡되므로,
     구분기 전용 업종이 결과에 나타나지 않는지 확인한다.
     """
-    old = _df().assign(**{C.QUARTER: 20254, C.INDUSTRY: "구분기전용업종"})
+    old = _df().assign(**{C.QUARTER: 20251, C.INDUSTRY: "구분기전용업종"})
     multi = pd.concat([old, _df()], ignore_index=True)
 
     md = build_insights_markdown(multi)
 
-    assert "`20261`" in md          # 최신 분기가 헤더에 명시됨
+    assert "`2025-4분기`" in md     # 최신 분기가 헤더에 명시됨
     assert "구분기전용업종" not in md  # 과거 분기 데이터는 제외됨
     # 최신 분기 단독 결과와 동일해야 한다 (생성 시각 줄 제외)
     def strip(text: str) -> str:

@@ -6,6 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from . import config
+from .metrics import format_quarter_label
 
 COLS = config.COLS
 
@@ -43,40 +44,64 @@ def district_open_close_bar(district_df: pd.DataFrame, title: str = "") -> go.Fi
     return fig
 
 
-_TREND_LABELS = {
-    COLS.STORE_CO: "총 점포",
-    COLS.OPEN_CO: "개업",
-    COLS.CLOSE_CO: "폐업",
-}
-
-
 def industry_trend_line(trend_df: pd.DataFrame, title: str = "") -> go.Figure:
-    """분기별 점포/개업/폐업 추이 라인 차트."""
-    melted = trend_df.melt(
-        id_vars=COLS.QUARTER,
-        value_vars=[COLS.STORE_CO, COLS.OPEN_CO, COLS.CLOSE_CO],
-        var_name="지표",
-        value_name="점포 수",
-    )
-    melted["지표"] = melted["지표"].map(_TREND_LABELS)
+    """분기별 추이 차트 (총 점포 / 개업·폐업 분리 패널)."""
+    from plotly.subplots import make_subplots
 
-    fig = px.line(
-        melted,
-        x=COLS.QUARTER,
-        y="점포 수",
-        color="지표",
-        markers=True,
-        title=title,
-        color_discrete_map={
-            "총 점포": "#2E86AB",
-            "개업": _COLOR_OPEN,
-            "폐업": _COLOR_CLOSE,
-        },
+    df = trend_df.copy()
+    df["_분기라벨"] = df[COLS.QUARTER].astype(str).map(format_quarter_label)
+
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        subplot_titles=("총 점포 수", "개업 / 폐업"),
+        vertical_spacing=0.14,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=df["_분기라벨"],
+            y=df[COLS.STORE_CO],
+            name="총 점포",
+            mode="lines+markers",
+            line=dict(color="#2E86AB", width=2),
+            marker=dict(size=8),
+        ),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=df["_분기라벨"],
+            y=df[COLS.OPEN_CO],
+            name="개업",
+            mode="lines+markers",
+            line=dict(color=_COLOR_OPEN, width=2),
+            marker=dict(size=8),
+        ),
+        row=2,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=df["_분기라벨"],
+            y=df[COLS.CLOSE_CO],
+            name="폐업",
+            mode="lines+markers",
+            line=dict(color=_COLOR_CLOSE, width=2),
+            marker=dict(size=8),
+        ),
+        row=2,
+        col=1,
     )
     fig.update_layout(
-        xaxis_title="분기",
+        title=title,
         legend_title_text="",
-        margin=dict(t=60, b=40, l=20, r=20),
+        margin=dict(t=80, b=40, l=20, r=20),
         plot_bgcolor="rgba(0,0,0,0)",
+        height=520,
     )
+    fig.update_yaxes(title_text="점포 수", row=1, col=1)
+    fig.update_yaxes(title_text="점포 수", row=2, col=1)
+    fig.update_xaxes(title_text="분기", row=2, col=1)
     return fig

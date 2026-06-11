@@ -13,6 +13,7 @@ from pathlib import Path
 import pandas as pd
 
 from . import config, data_loader
+from .metrics import format_quarter_label
 from .utils import get_logger
 
 logger = get_logger(__name__)
@@ -118,7 +119,8 @@ def build_insights_markdown(df: pd.DataFrame) -> str:
     add = lines.append
 
     add(f"> 📂 아래 수치는 **실제 수집 데이터에서 자동 생성**되었습니다 — "
-        f"**최신 분기 `{q_label}` 기준**, 점포 **{_n(len(df))}행** · {n_industries}개 업종 · "
+        f"**최신 분기 `{format_quarter_label(q_label)}` 기준**, 점포 **{_n(len(df))}행** · "
+        f"{n_industries}개 업종 · "
         f"{n_districts}개 자치구 · {n_areas}개 상권. "
         f"_(생성: {generated_at}, `python -m src.report`)_")
     add("")

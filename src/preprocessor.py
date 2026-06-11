@@ -73,6 +73,19 @@ def build_dimension(location_df: pd.DataFrame) -> pd.DataFrame:
     return dim
 
 
+def normalize_processed_dtypes(df: pd.DataFrame) -> pd.DataFrame:
+    """Parquet 병합 시 분기·좌표·수치 컬럼 dtype 을 통일한다 (순수 함수)."""
+    out = df.copy()
+    if COLS.TRDAR_CD in out.columns:
+        out[COLS.TRDAR_CD] = normalize_key(out[COLS.TRDAR_CD])
+    if COLS.QUARTER in out.columns:
+        out[COLS.QUARTER] = out[COLS.QUARTER].astype(str)
+    for col in (COLS.TM_X, COLS.TM_Y, COLS.LON, COLS.LAT, *config.NUMERIC_COLS):
+        if col in out.columns:
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+    return out
+
+
 def split_by_quarter(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
     """분기 컬럼 기준으로 데이터프레임을 분할한다 (순수 함수)."""
     if COLS.QUARTER not in df.columns:
@@ -125,7 +138,7 @@ def run() -> Path | None:
     validate_schema(store_df, config.REQUIRED_STORE_COLS, "점포(store)")
     validate_schema(location_df, config.REQUIRED_LOCATION_COLS, "위치(location)")
 
-    merged = merge_market_data(store_df, location_df)
+    merged = normalize_processed_dtypes(merge_market_data(store_df, location_df))
 
     config.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     for quarter, qdf in split_by_quarter(merged).items():
@@ -139,6 +152,7 @@ def run() -> Path | None:
             (read_table(p.with_suffix(".csv")) for p in quarter_files),
             ignore_index=True,
         )
+        combined = normalize_processed_dtypes(combined)
         final = write_table(combined, config.PROCESSED_FILE)
         logger.info(
             "전처리 완료: %s (%d행, 분기 %d개)",

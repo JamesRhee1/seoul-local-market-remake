@@ -70,14 +70,14 @@ def test_validate_schema_raises_with_missing_cols():
 def test_split_by_quarter_groups_rows():
     df = pd.DataFrame(
         {
-            COLS.QUARTER: [20254, 20254, 20261],
+            COLS.QUARTER: [20253, 20253, 20254],
             COLS.TRDAR_CD: [1, 2, 3],
         }
     )
     parts = split_by_quarter(df)
-    assert set(parts) == {"20254", "20261"}
-    assert len(parts["20254"]) == 2
-    assert len(parts["20261"]) == 1
+    assert set(parts) == {"20253", "20254"}
+    assert len(parts["20253"]) == 2
+    assert len(parts["20254"]) == 1
 
 
 def test_merge_attaches_district_and_handles_unknown():

@@ -40,7 +40,7 @@ def test_bar_chart_x_axis_is_district():
 def _trend_df():
     return pd.DataFrame(
         {
-            COLS.QUARTER: ["20254", "20261"],
+            COLS.QUARTER: ["20253", "20254"],
             COLS.STORE_CO: [100, 120],
             COLS.OPEN_CO: [10, 15],
             COLS.CLOSE_CO: [5, 8],
@@ -48,8 +48,11 @@ def _trend_df():
     )
 
 
-def test_trend_line_has_three_series():
+def test_trend_line_has_three_series_on_split_panels():
     fig = industry_trend_line(_trend_df(), title="추이")
     assert len(fig.data) == 3
     assert {t.name for t in fig.data} == {"총 점포", "개업", "폐업"}
     assert fig.layout.title.text == "추이"
+    # 총 점포는 상단, 개업/폐업은 하단 패널
+    assert fig.data[0].yaxis == "y"
+    assert fig.data[1].yaxis == "y2"

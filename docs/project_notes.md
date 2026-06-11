@@ -139,7 +139,7 @@ seoul-local-market-remake/
 ├── data/
 │   ├── raw/                # 수집 원본 (Git 제외)
 │   ├── processed/          # 전처리 결과 (Git 제외)
-│   └── sample/             # 데모용 소형 샘플 (Git 포함)
+│   └── sample/             # 2025년 1~4분기 데모 샘플 (Git 포함)
 ├── src/
 │   ├── config.py           # .env 로드 + 경로/서비스/컬럼 상수
 │   ├── utils.py            # 로깅 + 재시도 HTTP + 페이지네이션
@@ -164,7 +164,7 @@ seoul-local-market-remake/
 | `app.py` | 사이드바 필터·KPI·차트 위젯을 배치하는 얇은 UI 계층. 도메인 로직은 `src`에 위임 |
 | `src/` | 수집·전처리·로딩·지표·차트·리포트 도메인 로직 패키지 |
 | `data/raw`, `data/processed` | 수집 원본·가공 결과(대용량, Git 제외) |
-| `data/sample` | 누구나 즉시 실행할 수 있는 소형 데모 데이터(Git 포함) |
+| `data/sample` | 2025년 1~4분기(`20251`~`20254`) 소형 데모 Parquet 스냅샷(Git 포함) |
 | `tests/` | 순수 함수 단위 테스트 |
 | `docs/` | 분석 보고서 등 문서 |
 
@@ -318,7 +318,7 @@ streamlit run app.py
 - [ ] 지도 기반 시각화 추가
 - [ ] Streamlit Cloud 또는 내부 서버 배포
 - [ ] 데이터 수집 스케줄링 자동화(분기 누적 적재)
-- [ ] 시계열(분기 `STDR_YYQU_CD`) 추세 시각화 추가
+- [x] 시계열(분기 `STDR_YYQU_CD`) 추세 시각화 추가 (2025년 1~4분기)
 - [ ] 데이터 정합성 검증(스키마/행수) 단계 추가
 - [ ] README와 docs 문서 간 링크 정리
 

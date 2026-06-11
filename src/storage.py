@@ -46,6 +46,8 @@ def list_quarter_snapshots(processed_dir: Path, prefix: str) -> list[Path]:
         if candidate.suffix not in {".csv", ".parquet"}:
             continue
         quarter = candidate.stem.removeprefix(prefix)
+        if quarter == "final":
+            continue
         existing = by_quarter.get(quarter)
         if existing is None or (existing.suffix == ".csv" and candidate.suffix == ".parquet"):
             by_quarter[quarter] = candidate

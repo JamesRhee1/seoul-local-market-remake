@@ -21,6 +21,7 @@ def fake_paths(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "PROCESSED_DIR", processed_dir)
     monkeypatch.setattr(config, "PROCESSED_FILE", processed)
     monkeypatch.setattr(config, "SAMPLE_FILE", sample)
+    monkeypatch.setattr(config, "SAMPLE_FILE_LEGACY", sample.parent / "legacy_sample.csv")
     return processed, sample
 
 
@@ -75,9 +76,9 @@ def test_load_market_data_applies_defensive_cleaning(fake_paths):
 def test_load_quarter_trend_data_concatenates_snapshots(fake_paths):
     processed, _ = fake_paths
     processed.parent.mkdir(parents=True, exist_ok=True)
-    q1 = processed.parent / f"{config.QUARTER_FILE_PREFIX}20254.csv"
-    q2 = processed.parent / f"{config.QUARTER_FILE_PREFIX}20261.csv"
-    for path, quarter in ((q1, "20254"), (q2, "20261")):
+    q1 = processed.parent / f"{config.QUARTER_FILE_PREFIX}20253.csv"
+    q2 = processed.parent / f"{config.QUARTER_FILE_PREFIX}20254.csv"
+    for path, quarter in ((q1, "20253"), (q2, "20254")):
         pd.DataFrame(
             {
                 COLS.QUARTER: [quarter],
@@ -88,4 +89,4 @@ def test_load_quarter_trend_data_concatenates_snapshots(fake_paths):
 
     df = data_loader.load_quarter_trend_data()
     assert len(df) == 2
-    assert sorted(df[COLS.QUARTER].astype(str).tolist()) == ["20254", "20261"]
+    assert sorted(df[COLS.QUARTER].astype(str).tolist()) == ["20253", "20254"]

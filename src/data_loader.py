@@ -16,14 +16,31 @@ from .storage import list_quarter_snapshots, read_table, resolve_existing
 COLS = config.COLS
 
 
+def _load_quarter_snapshots_from(directory: Path) -> pd.DataFrame:
+    """디렉터리의 분기 스냅샷을 읽어 합친다."""
+    quarter_files = list_quarter_snapshots(directory, config.QUARTER_FILE_PREFIX)
+    if not quarter_files:
+        return pd.DataFrame()
+    return _normalize_loaded(
+        pd.concat(
+            (
+                pd.read_parquet(p) if p.suffix == ".parquet" else pd.read_csv(p)
+                for p in quarter_files
+            ),
+            ignore_index=True,
+        )
+    )
+
+
 def resolve_data_path() -> Tuple[Path | None, str]:
     """사용할 데이터 경로와 출처 라벨을 반환한다 (Parquet 우선)."""
     processed = resolve_existing(config.PROCESSED_FILE)
     if processed is not None:
         return processed, "processed"
-    sample = resolve_existing(config.SAMPLE_FILE)
-    if sample is not None:
-        return sample, "sample"
+    for sample_path in (config.SAMPLE_FILE, config.SAMPLE_FILE_LEGACY):
+        sample = resolve_existing(sample_path)
+        if sample is not None:
+            return sample, "sample"
     return None, "none"
 
 
@@ -45,18 +62,11 @@ def load_market_data(path: Path) -> pd.DataFrame:
 
 
 def load_quarter_trend_data() -> pd.DataFrame:
-    """processed 디렉터리의 분기 스냅샷을 모두 읽어 추이 분석용으로 합친다."""
-    quarter_files = list_quarter_snapshots(config.PROCESSED_DIR, config.QUARTER_FILE_PREFIX)
-    if quarter_files:
-        return _normalize_loaded(
-            pd.concat(
-                (
-                    pd.read_parquet(p) if p.suffix == ".parquet" else pd.read_csv(p)
-                    for p in quarter_files
-                ),
-                ignore_index=True,
-            )
-        )
+    """분기 스냅샷을 읽어 추이 분석용으로 합친다 (processed → sample 순)."""
+    for directory in (config.PROCESSED_DIR, config.SAMPLE_DIR):
+        trend = _load_quarter_snapshots_from(directory)
+        if not trend.empty:
+            return trend
     path, _ = resolve_data_path()
     if path is None:
         return pd.DataFrame()

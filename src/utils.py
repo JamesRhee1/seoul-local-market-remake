@@ -92,7 +92,7 @@ def paginate(
     Args:
         service: 서비스 식별자 (예: VwsmTrdarStorQq)
         limit: 최대 수집 행 수. None 또는 0 이면 전체.
-        filters: 경로 끝에 붙는 요청 인자 값들(순서 중요). 예: ["20261"] → 분기 필터.
+        filters: 경로 끝에 붙는 요청 인자 값들(순서 중요). 예: ["20254"] → 분기 필터.
     """
     if not config.has_valid_api_key():
         raise RuntimeError("유효한 API 키가 없습니다. .env 의 SEOUL_API_KEY 를 확인하세요.")

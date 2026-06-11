@@ -55,7 +55,7 @@ def collect_store_data(
 
     Args:
         limit: 최대 수집 행 수. None 이면 설정값, 0 이면 전체.
-        quarter: 기준 년분기 코드(예: 20261). None 이면 설정값(TARGET_QUARTER).
+        quarter: 기준 년분기 코드(예: 20254). None 이면 설정값(TARGET_QUARTER).
     """
     limit = config.COLLECT_LIMIT if limit is None else limit
     quarter = config.TARGET_QUARTER if quarter is None else quarter

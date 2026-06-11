@@ -9,6 +9,7 @@ from src.metrics import (
     district_options,
     filter_data,
     filter_latest_quarter,
+    format_quarter_label,
     industry_options,
     quarter_options,
 )
@@ -66,7 +67,7 @@ def test_options_sorted_unique():
 def _quarter_df():
     return pd.DataFrame(
         {
-            COLS.QUARTER: ["20254", "20254", "20261", "20261"],
+            COLS.QUARTER: ["20253", "20253", "20254", "20254"],
             COLS.INDUSTRY: ["커피-음료", "한식음식점", "커피-음료", "커피-음료"],
             COLS.DISTRICT: ["중구", "중구", "강남구", "강남구"],
             COLS.STORE_CO: [10, 5, 20, 15],
@@ -76,13 +77,18 @@ def _quarter_df():
     )
 
 
+def test_format_quarter_label():
+    assert format_quarter_label("20254") == "2025-4분기"
+    assert format_quarter_label("20251") == "2025-1분기"
+
+
 def test_quarter_options_sorted():
-    assert quarter_options(_quarter_df()) == ["20254", "20261"]
+    assert quarter_options(_quarter_df()) == ["20253", "20254"]
 
 
 def test_filter_latest_quarter_keeps_newest():
     out = filter_latest_quarter(_quarter_df())
-    assert set(out[COLS.QUARTER].astype(str)) == {"20261"}
+    assert set(out[COLS.QUARTER].astype(str)) == {"20254"}
     assert len(out) == 2
 
 
@@ -105,6 +111,6 @@ def test_aggregate_for_map_sums_by_trdar():
 
 def test_aggregate_industry_by_quarter():
     agg = aggregate_industry_by_quarter(_quarter_df(), industry="커피-음료")
-    assert agg[COLS.QUARTER].tolist() == ["20254", "20261"]
+    assert agg[COLS.QUARTER].tolist() == ["20253", "20254"]
     assert agg[COLS.STORE_CO].tolist() == [10, 35]
     assert agg[COLS.OPEN_CO].tolist() == [2, 7]

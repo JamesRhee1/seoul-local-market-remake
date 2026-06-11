@@ -11,6 +11,14 @@ from . import config
 COLS = config.COLS
 
 
+def format_quarter_label(quarter: str) -> str:
+    """분기 코드(예: 20254)를 읽기 쉬운 라벨(예: 2025-4분기)로 변환한다."""
+    code = str(quarter)
+    if len(code) >= 5 and code[:4].isdigit() and code[4].isdigit():
+        return f"{code[:4]}-{code[4]}분기"
+    return code
+
+
 @dataclass(frozen=True)
 class Kpi:
     total_stores: int

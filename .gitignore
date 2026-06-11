@@ -11,6 +11,7 @@ data/processed/*
 !data/processed/.gitkeep
 !data/sample/
 data/**/*.parquet
+!data/sample/**/*.parquet
 
 # --- 파이썬 ---
 __pycache__/
