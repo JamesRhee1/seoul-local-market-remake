@@ -120,7 +120,7 @@ tags:
 | 전처리 | 스크립트/함수 결합 | 순수 함수(`clean_numeric`/`build_dimension`/`merge_market_data`)와 I/O(`run`) 분리 | 재사용성·테스트 용이성 |
 | 시각화 | 앱 내부 로직 중심 | `charts`/`maps` 분리, 3탭(현황·추이·지도) | UI와 시각화 로직 분리 |
 | 지표 계산 | 앱 내부 집계 | `metrics` 순수 함수(KPI/집계/옵션) | 단위 테스트 가능 |
-| 테스트 | 부족하거나 없음 | `pytest` 46개 + GitHub Actions CI (ruff, 3.11/3.12) | 회귀 검증 자동화 |
+| 테스트 | 부족하거나 없음 | `pytest` 52개 + GitHub Actions CI (ruff, 3.11/3.12) | 회귀 검증 자동화 |
 | 저장 포맷 | CSV 중심 | Parquet 저장 + CSV 폴백(`storage.py`) | I/O 효율·호환 |
 | 데이터 거버넌스 | 대용량 CSV 추적 가능성 | raw/processed Git 제외, sample Parquet(4분기) 포함 | 저장소 경량화 |
 | 문서화 | 기능 설명 중심 | README(사용법) + 보고서(분석) 분리 | 전달력 향상 |
@@ -155,7 +155,7 @@ seoul-local-market-remake/
 │   ├── maps.py             # pydeck 밀도 지도
 │   ├── sample_data.py      # processed→sample 생성
 │   └── report.py           # README AUTO-INSIGHTS
-├── tests/                  # 46개
+├── tests/                  # 52개
 └── docs/
     ├── architecture.png
     └── project_notes.md
@@ -182,17 +182,33 @@ seoul-local-market-remake/
 
 ```mermaid
 flowchart TD
-    A["🌐 서울 열린데이터 광장 API<br/>(점포 · 위치 데이터)"]:::source
-    B["⬇️ collector.py<br/>데이터 수집"]:::collect
-    C["📁 data/raw<br/>수집 원본 Parquet"]:::store
-    D["🧹 preprocessor.py<br/>병합·좌표·분기 스냅샷"]:::process
-    E["📦 data/processed<br/>분기별 Parquet"]:::store
-    F["🔄 data_loader.py<br/>로딩 (sample 폴백)"]:::load
-    G["📐 metrics.py<br/>KPI · 집계"]:::analyze
-    H["📊 charts.py · maps.py"]:::analyze
-    I["🖥️ app.py (3탭)"]:::dashboard
+    API["🌐 서울 열린데이터 광장 API"]:::source
+    ORCH["🎯 run_pipeline.py"]:::collect
+    COL["⬇️ collector.py"]:::collect
+    RAW["📁 data/raw"]:::store
+    PRE["🧹 preprocessor.py"]:::process
+    GEO["🗺️ geo.py (EPSG:5181)"]:::process
+    STIO["💾 storage.py"]:::store
+    PROC["📦 data/processed<br/>분기 + final"]:::store
+    SMP["🔬 sample_data.py"]:::process
+    SAMPDIR["📁 data/sample"]:::store
+    LOAD["🔄 data_loader.py"]:::load
+    MET["📐 metrics.py"]:::analyze
+    CHART["📊 charts.py"]:::analyze
+    MAPS["🗺️ maps.py"]:::analyze
+    APP["🖥️ app.py (3탭)"]:::dashboard
 
-    A --> B --> C --> D --> E --> F --> G --> H --> I
+    API --> COL
+    ORCH ==>|제어| COL
+    COL --> RAW --> PRE
+    PRE <--> GEO
+    PRE --> STIO --> PROC
+    ORCH ==>|제어| PRE
+    PROC -.-> SMP -.-> SAMPDIR
+    PROC --> LOAD
+    SAMPDIR -.->|폴백| LOAD
+    LOAD --> MET --> CHART --> APP
+    LOAD --> MAPS --> APP
 
     classDef source fill:#E8F0FE,stroke:#4285F4,stroke-width:2px,color:#1a1a1a;
     classDef collect fill:#E6F4EA,stroke:#34A853,stroke-width:2px,color:#1a1a1a;
@@ -225,7 +241,7 @@ flowchart TD
 |---|---|---|
 | `clean_numeric` | 순수 함수 | 수치형 컬럼을 `to_numeric(errors="coerce")`로 강제 변환 후 결측 0으로 채움 |
 | `normalize_key` | 순수 함수 | 상권코드를 `Int64`→문자열로 정규화해 `.0` 혼선·조인 깨짐 방지 |
-| `build_dimension` | 순수 함수 | 상권코드→자치구·TM좌표 차원, `lon`/`lat` 변환 포함 |
+| `build_dimension` | 순수 함수 | 상권코드→자치구·TM좌표 차원(`TRDAR_CD_NM` 제외 — Fact 보유), `geo.py`로 `lon`/`lat` 변환 |
 | `merge_market_data` | 순수 함수 | 점포(Fact)에 위치 차원 Left Join, `Unknown` 처리 |
 | `split_by_quarter` | 순수 함수 | 분기별 스냅샷 분할 (`20251`~`20254` 축적) |
 | `normalize_processed_dtypes` | 순수 함수 | Parquet 병합 시 dtype 통일 |
@@ -274,7 +290,7 @@ streamlit run app.py
 
 | 명령 | 상태 |
 |---|---|
-| `pytest` | **46개** 전체 통과 |
+| `pytest` | **52개** 전체 통과 |
 | `ruff check .` | 통과 |
 | GitHub Actions | push/PR 시 Python 3.11/3.12 matrix |
 | `streamlit run app.py` | sample 4분기 Parquet로 3탭 데모 가능 |
@@ -300,11 +316,12 @@ streamlit run app.py
 | `test_charts.py` | 막대·2단 추이 차트 골격 |
 | `test_maps.py` | 밀도 색상, pydeck 레이어 |
 | `test_data_loader.py` | processed/sample 폴백, 분기 스냅샷 로딩 |
-| `test_storage.py` | Parquet/CSV 폴백, `final` 제외 |
+| `test_storage.py` | Parquet/CSV 폴백, 5자리 분기 코드만 스냅샷 인정 |
+| `test_pipeline_integration.py` | `preprocessor.run()` 2회 연속 멱등성 |
 | `test_utils.py` | API 오류 처리, 페이지네이션 |
 | `test_report.py` | 인사이트 생성, 최신 분기만 사용 |
 | `test_sample_data.py` | sample 분기 스냅샷 생성 |
-| `test_geo.py` | TM→WGS84 변환 |
+| `test_geo.py` | TM→WGS84 변환 (EPSG:5181, 강남역 ±0.001°) |
 
 ---
 
@@ -317,7 +334,7 @@ streamlit run app.py
 | 대시보드 구현 | Streamlit + Plotly 기반 인터랙티브 UI |
 | 재현성 관리 | 버전 고정 `requirements.txt`, 샘플 데이터, 실행 명령 정리 |
 | 보안 의식 | `.env` 기반 키 관리, 로그 키 마스킹, `.gitignore` 정책 |
-| 테스트 습관 | `pytest` 46개 + CI로 핵심 로직 회귀 검증 |
+| 테스트 습관 | `pytest` 52개 + CI로 핵심 로직·멱등성 회귀 검증 |
 | 문서화 | README(사용법)와 분석 보고서(이 문서) 역할 분리 |
 
 핵심 메시지는 "데이터 분석 프로젝트도 소프트웨어 엔지니어링 관점에서 구조화·테스트·문서화될 수 있다"는 점을 보여주는 것이다.

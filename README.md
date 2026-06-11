@@ -230,29 +230,60 @@ DB 없이 Parquet(레거시 CSV 폴백) 파일을 사용하며, `src/` 패키지
 | 계층 | 색상 | 구성 요소 | 역할 |
 |---|---|---|---|
 | **외부** | 파란색 | 사용자, 개발자, 서울 열린데이터 광장 API, `.env` | 브라우저·CLI 접점과 외부 데이터·인증 제공 |
-| **ETL 파이프라인** | 초록색 | `collector.py`, `preprocessor.py`, `utils.py`, `config.py` | API 수집, Star Schema 병합(`TRDAR_CD`), 전처리 |
-| **데이터 저장소** | 노란색 | `data/raw/`, `data/processed/`, `data/sample/` | Parquet 기반(분기 스냅샷). processed 우선, 없으면 sample 폴백 |
-| **분석** | 청록색 | `data_loader.py`, `metrics.py`, `charts.py`, `maps.py`, `report.py` | 로딩, KPI·집계, Plotly/pydeck 시각화, README 인사이트 |
-| **표현/UI** | 검정 | `app.py` (Streamlit) | 사이드바 필터, KPI 카드, 차트, 원본 데이터 테이블 |
+| **ETL 파이프라인** | 초록색 | `run_pipeline.py`, `collector.py`, `preprocessor.py`, `geo.py`, `storage.py` | 오케스트레이션, API 수집, Star Schema 병합(`TRDAR_CD`), TM→WGS84, Parquet I/O |
+| **데이터 저장소** | 노란색 | `data/raw/`, `data/processed/` (분기 Parquet + final 합본), `data/sample/` | Parquet 우선·CSV 폴백. processed 우선, 없으면 sample 폴백 |
+| **분석** | 청록색 | `data_loader.py`, `metrics.py`, `charts.py`, `maps.py`, `report.py`, `sample_data.py` | 로딩, KPI·집계, Plotly/pydeck 시각화, README 인사이트, 데모 샘플 생성 |
+| **표현/UI** | 검정 | `app.py` (Streamlit, 3탭) | 현황·분기 추이·점포 밀도 지도, 사이드바 필터, KPI 카드 |
 
-- **실선 화살표**: API → 수집 → 전처리 → 분석 → 대시보드로 이어지는 주 데이터 흐름
-- **점선 화살표**: `data/sample/` 폴백 경로, `report.py` 선택적 README 갱신
+- **실선 화살표**: API → 수집 → 전처리 → 저장소 → 로딩 → 분석 → 대시보드로 이어지는 주 데이터 흐름
+- **점선 화살표**: `run_pipeline.py` 제어 흐름, `processed` → `sample_data.py` → `data/sample/` 데모 복제, `data_loader` sample 폴백
 
 ### 상세 흐름 (Mermaid)
 
 ```mermaid
 flowchart TD
-    A["🌐 서울 열린데이터 광장 API<br/>(점포 · 위치 데이터)"]:::source
-    B["⬇️ collector.py<br/>데이터 수집"]:::collect
-    C["📁 data/raw<br/>수집 원본 Parquet"]:::store
-    D["🧹 preprocessor.py<br/>병합 · 좌표 · 분기 스냅샷"]:::process
-    E["📦 data/processed<br/>분기별 Parquet"]:::store
-    F["🔄 data_loader.py<br/>로딩 (없으면 sample 폴백)"]:::load
-    G["📐 metrics.py<br/>KPI · 집계"]:::analyze
-    H["📊 charts.py · maps.py<br/>Plotly · pydeck"]:::analyze
-    I["🖥️ Streamlit 대시보드<br/>app.py (3탭)"]:::dashboard
+    API["🌐 서울 열린데이터 광장 API<br/>(점포 · 위치)"]:::source
+    ENV["🔑 .env / Streamlit Secrets"]:::source
+    ORCH["🎯 run_pipeline.py<br/>오케스트레이터"]:::collect
 
-    A --> B --> C --> D --> E --> F --> G --> H --> I
+    COL["⬇️ collector.py<br/>데이터 수집"]:::collect
+    RAW["📁 data/raw<br/>수집 원본"]:::store
+
+    PRE["🧹 preprocessor.py<br/>병합 · 분기 스냅샷"]:::process
+    GEO["🗺️ geo.py<br/>TM→WGS84 (EPSG:5181)"]:::process
+    STIO["💾 storage.py<br/>Parquet/CSV I/O"]:::store
+    PROC["📦 data/processed<br/>분기 Parquet + final 합본"]:::store
+
+    SMP["🔬 sample_data.py<br/>데모 샘플 생성"]:::process
+    SAMPDIR["📁 data/sample"]:::store
+
+    LOAD["🔄 data_loader.py<br/>로딩"]:::load
+    MET["📐 metrics.py<br/>KPI · 집계"]:::analyze
+    CHART["📊 charts.py<br/>Plotly"]:::analyze
+    MAPS["🗺️ maps.py<br/>pydeck"]:::analyze
+    RPT["📝 report.py<br/>README 인사이트"]:::analyze
+    APP["🖥️ app.py<br/>3탭: 현황/추이/지도"]:::dashboard
+
+    API --> COL
+    ENV --> COL
+    ORCH ==>|제어| COL
+    COL --> RAW
+    RAW --> PRE
+    PRE <--> GEO
+    PRE --> STIO
+    STIO --> PROC
+    ORCH ==>|제어| PRE
+    PROC -.-> SMP
+    SMP -.-> SAMPDIR
+    PROC --> LOAD
+    SAMPDIR -.->|폴백| LOAD
+    LOAD --> MET
+    MET --> CHART
+    MET --> MAPS
+    CHART --> APP
+    MAPS --> APP
+    ORCH ==>|제어| RPT
+    PROC --> RPT
 
     classDef source fill:#E8F0FE,stroke:#4285F4,stroke-width:2px,color:#1a1a1a;
     classDef collect fill:#E6F4EA,stroke:#34A853,stroke-width:2px,color:#1a1a1a;
@@ -263,10 +294,11 @@ flowchart TD
     classDef dashboard fill:#212121,stroke:#000000,stroke-width:2px,color:#ffffff;
 ```
 
-- `collector.py` 가 API에서 점포(Fact)·위치(Dimension) 데이터를 수집해 `data/raw` 에 저장합니다.
-- `preprocessor.py` 가 두 원천을 병합·정제해 `data/processed` 에 저장합니다.
-- `data_loader.py` 가 가공 데이터(없으면 샘플)를 읽어 대시보드에 공급합니다.
-- `metrics.py` 가 KPI와 집계 지표를 계산하고, `charts.py` 가 차트를 만들어 Streamlit 화면에 표시합니다.
+- `run_pipeline.py` 가 수집 → 전처리 → `report.update_readme` 순으로 파이프라인을 오케스트레이션합니다.
+- `collector.py` 가 API에서 점포(Fact)·위치(Dimension) 데이터를 수집해 `storage.py` 로 `data/raw` 에 저장합니다.
+- `preprocessor.py` 가 두 원천을 병합·정제하고, `geo.py` 가 TM 좌표를 WGS84로 변환한 뒤 분기 스냅샷·`final` 합본을 `data/processed` 에 씁니다.
+- `sample_data.py` 가 processed 분기 스냅샷에서 `data/sample/` 데모용 소형 Parquet을 생성합니다(API 키 없이 3탭 데모).
+- `data_loader.py` 가 processed(없으면 sample)를 읽고, `metrics.py`·`charts.py`·`maps.py` 가 KPI·차트·지도를 만들어 `app.py` 3탭에 표시합니다.
 
 ---
 
@@ -274,11 +306,16 @@ flowchart TD
 
 ```text
 seoul-local-market-remake/
-├── app.py                  # Streamlit 대시보드 진입점 (UI 조립)
+├── app.py                  # Streamlit 대시보드 진입점 (3탭 UI 조립)
 ├── README.md
+├── pyproject.toml          # ruff/pytest 설정
 ├── requirements.txt
+├── requirements-dev.txt    # pytest, ruff, requests-mock
 ├── .env.example            # API 키 템플릿
 ├── .gitignore
+├── .github/
+│   └── workflows/
+│       └── ci.yml          # push/PR: ruff + pytest (3.11/3.12)
 ├── data/
 │   ├── raw/                # 수집 원본 (Git 제외)
 │   ├── processed/          # 전처리 결과 (Git 제외)
@@ -293,11 +330,11 @@ seoul-local-market-remake/
 │   ├── charts.py           # Plotly 차트 생성
 │   ├── maps.py             # pydeck 지도
 │   ├── storage.py          # Parquet/CSV I/O
-│   ├── geo.py              # TM→WGS84 좌표 변환
+│   ├── geo.py              # TM→WGS84 좌표 변환 (EPSG:5181)
 │   ├── sample_data.py      # processed → sample 분기 스냅샷
 │   └── report.py           # 리포트/인사이트 생성
 ├── run_pipeline.py         # 수집→전처리→리포트 오케스트레이터
-├── tests/                  # pytest 46개 (CI: ruff + pytest)
+├── tests/                  # pytest 52개 (CI: ruff + pytest)
 │   ├── test_metrics.py
 │   ├── test_preprocessor.py
 │   ├── test_charts.py
@@ -307,7 +344,8 @@ seoul-local-market-remake/
 │   ├── test_geo.py
 │   ├── test_sample_data.py
 │   ├── test_utils.py
-│   └── test_report.py
+│   ├── test_report.py
+│   └── test_pipeline_integration.py  # 전처리 멱등성 통합 검증
 └── docs/
     ├── architecture.png      # 시스템 아키텍처 인포그래픽
     └── project_notes.md
