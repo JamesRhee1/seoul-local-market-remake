@@ -74,9 +74,37 @@ def build_dimension(location_df: pd.DataFrame) -> pd.DataFrame:
     return dim
 
 
+def repair_legacy_merge_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """구버전 병합 스냅샷의 TRDAR_CD_NM_x/_y 접미사를 복구한다 (순수 함수)."""
+    out = df.copy()
+    legacy_name = f"{COLS.TRDAR_CD_NM}_x"
+    if legacy_name in out.columns and COLS.TRDAR_CD_NM not in out.columns:
+        out[COLS.TRDAR_CD_NM] = out[legacy_name]
+    suffix_cols = [c for c in out.columns if str(c).endswith("_x") or str(c).endswith("_y")]
+    if suffix_cols:
+        out = out.drop(columns=suffix_cols)
+    return out
+
+
+def refresh_wgs84_from_tm(df: pd.DataFrame) -> pd.DataFrame:
+    """TM 좌표가 있으면 lon/lat 을 현행 EPSG 기준으로 다시 계산한다 (순수 함수)."""
+    if COLS.TM_X not in df.columns or COLS.TM_Y not in df.columns:
+        return df
+    out = df.copy()
+    coords = out.apply(
+        lambda row: seoul_tm_to_wgs84(row[COLS.TM_X], row[COLS.TM_Y]),
+        axis=1,
+        result_type="expand",
+    )
+    out[COLS.LON] = coords[0]
+    out[COLS.LAT] = coords[1]
+    return out
+
+
 def normalize_processed_dtypes(df: pd.DataFrame) -> pd.DataFrame:
     """Parquet 병합 시 분기·좌표·수치 컬럼 dtype 을 통일한다 (순수 함수)."""
-    out = df.copy()
+    out = repair_legacy_merge_columns(df)
+    out = refresh_wgs84_from_tm(out)
     if COLS.TRDAR_CD in out.columns:
         out[COLS.TRDAR_CD] = normalize_key(out[COLS.TRDAR_CD])
     if COLS.QUARTER in out.columns:
@@ -150,7 +178,7 @@ def run() -> Path | None:
     quarter_files = list_quarter_snapshots(config.PROCESSED_DIR, config.QUARTER_FILE_PREFIX)
     if quarter_files:
         combined = pd.concat(
-            (read_table(p.with_suffix(".csv")) for p in quarter_files),
+            (read_table(p) for p in quarter_files),
             ignore_index=True,
         )
         combined = normalize_processed_dtypes(combined)

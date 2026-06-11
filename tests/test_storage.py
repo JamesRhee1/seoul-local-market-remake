@@ -15,6 +15,12 @@ def test_write_and_read_parquet(tmp_path):
     assert out["a"].tolist() == [1, 2]
 
 
+def test_read_table_accepts_resolved_parquet_path(tmp_path):
+    path = tmp_path / "direct.parquet"
+    pd.DataFrame({"c": [7]}).to_parquet(path, index=False)
+    assert read_table(path)["c"].tolist() == [7]
+
+
 def test_read_table_falls_back_to_csv(tmp_path):
     path = tmp_path / "legacy.csv"
     pd.DataFrame({"b": [3]}).to_csv(path, index=False)

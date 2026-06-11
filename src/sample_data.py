@@ -45,7 +45,7 @@ def build_from_processed(
     quarter_files = list_quarter_snapshots(config.SAMPLE_DIR, config.QUARTER_FILE_PREFIX)
     combined = normalize_processed_dtypes(
         pd.concat(
-            (read_table(p.with_suffix(".csv")) for p in quarter_files),
+            (read_table(p) for p in quarter_files),
             ignore_index=True,
         )
     )

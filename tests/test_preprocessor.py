@@ -6,6 +6,8 @@ from src.preprocessor import (
     build_dimension,
     clean_numeric,
     merge_market_data,
+    normalize_processed_dtypes,
+    repair_legacy_merge_columns,
     split_by_quarter,
     validate_schema,
 )
@@ -92,6 +94,37 @@ def test_split_by_quarter_groups_rows():
     assert set(parts) == {"20253", "20254"}
     assert len(parts["20253"]) == 2
     assert len(parts["20254"]) == 1
+
+
+def test_repair_legacy_merge_columns_restores_trdar_name():
+    legacy = pd.DataFrame(
+        {
+            COLS.TRDAR_CD: [1001],
+            f"{COLS.TRDAR_CD_NM}_x": ["점포상권"],
+            f"{COLS.TRDAR_CD_NM}_y": ["위치상권"],
+            COLS.STORE_CO: [1],
+        }
+    )
+    repaired = repair_legacy_merge_columns(legacy)
+    assert COLS.TRDAR_CD_NM in repaired.columns
+    assert repaired[COLS.TRDAR_CD_NM].iloc[0] == "점포상권"
+    assert not any(str(c).endswith("_x") or str(c).endswith("_y") for c in repaired.columns)
+
+
+def test_normalize_processed_dtypes_repairs_legacy_snapshot():
+    legacy = pd.DataFrame(
+        {
+            COLS.TRDAR_CD: [1001],
+            f"{COLS.TRDAR_CD_NM}_x": ["점포상권"],
+            f"{COLS.TRDAR_CD_NM}_y": ["위치상권"],
+            COLS.TM_X: [202454],
+            COLS.TM_Y: [444235],
+            COLS.STORE_CO: [1],
+        }
+    )
+    out = normalize_processed_dtypes(legacy)
+    assert COLS.TRDAR_CD_NM in out.columns
+    assert COLS.LON in out.columns and COLS.LAT in out.columns
 
 
 def test_merge_preserves_trdar_name_without_suffix_columns():

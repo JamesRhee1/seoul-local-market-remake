@@ -11,6 +11,7 @@ from typing import Tuple
 import pandas as pd
 
 from . import config
+from .preprocessor import normalize_processed_dtypes
 from .storage import list_quarter_snapshots, read_table, resolve_existing
 
 COLS = config.COLS
@@ -22,13 +23,7 @@ def _load_quarter_snapshots_from(directory: Path) -> pd.DataFrame:
     if not quarter_files:
         return pd.DataFrame()
     return _normalize_loaded(
-        pd.concat(
-            (
-                pd.read_parquet(p) if p.suffix == ".parquet" else pd.read_csv(p)
-                for p in quarter_files
-            ),
-            ignore_index=True,
-        )
+        pd.concat((read_table(p) for p in quarter_files), ignore_index=True)
     )
 
 
@@ -46,18 +41,17 @@ def resolve_data_path() -> Tuple[Path | None, str]:
 
 def _normalize_loaded(df: pd.DataFrame) -> pd.DataFrame:
     """로드된 데이터프레임에 공통 방어적 정제를 적용한다."""
-    if COLS.DISTRICT in df.columns:
-        df[COLS.DISTRICT] = df[COLS.DISTRICT].fillna("Unknown")
+    out = normalize_processed_dtypes(df)
+    if COLS.DISTRICT in out.columns:
+        out[COLS.DISTRICT] = out[COLS.DISTRICT].fillna("Unknown")
     for col in config.NUMERIC_COLS:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
-    return df
+        if col in out.columns:
+            out[col] = pd.to_numeric(out[col], errors="coerce").fillna(0)
+    return out
 
 
 def load_market_data(path: Path) -> pd.DataFrame:
     """Parquet/CSV 를 읽고 최소한의 방어적 정제를 적용한다."""
-    if path.suffix == ".parquet":
-        return _normalize_loaded(pd.read_parquet(path))
     return _normalize_loaded(read_table(path))
 
 

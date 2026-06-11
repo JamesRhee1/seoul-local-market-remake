@@ -68,18 +68,32 @@ MAX_RETRIES = 3
 RETRY_BACKOFF = 1.5         # 초 (지수 백오프 기준값)
 
 
+_STREAMLIT_SECRETS: object | None = None
+_STREAMLIT_CHECKED = False
+
+
+def _get_streamlit_secrets() -> object | None:
+    """Streamlit secrets 객체를 모듈 로드 시 1회만 판별해 캐싱한다."""
+    global _STREAMLIT_SECRETS, _STREAMLIT_CHECKED
+    if not _STREAMLIT_CHECKED:
+        _STREAMLIT_CHECKED = True
+        try:
+            import streamlit as st
+
+            _STREAMLIT_SECRETS = st.secrets
+        except Exception:
+            _STREAMLIT_SECRETS = None
+    return _STREAMLIT_SECRETS
+
+
 def _read_str_setting(key: str, default: str = "") -> str:
     """환경변수(.env) 또는 Streamlit Secrets 에서 문자열 설정을 읽는다."""
     val = os.getenv(key, "").strip()
     if val:
         return val
-    try:
-        import streamlit as st
-
-        if key in st.secrets:
-            return str(st.secrets[key]).strip()
-    except Exception:
-        pass
+    secrets = _get_streamlit_secrets()
+    if secrets is not None and key in secrets:
+        return str(secrets[key]).strip()
     return default
 
 

@@ -22,7 +22,15 @@ def resolve_existing(path: Path) -> Path | None:
 
 
 def read_table(path: Path) -> pd.DataFrame:
-    """Parquet 또는 CSV 를 읽는다."""
+    """Parquet 또는 CSV 를 읽는다.
+
+    논리 경로(.csv 기준)뿐 아니라 이미 존재하는 실제 파일 경로도 그대로 받을 수 있다.
+    """
+    if path.is_file():
+        if path.suffix == ".parquet":
+            return pd.read_parquet(path)
+        if path.suffix == ".csv":
+            return pd.read_csv(path, low_memory=False)
     resolved = resolve_existing(path)
     if resolved is None:
         raise FileNotFoundError(path)
