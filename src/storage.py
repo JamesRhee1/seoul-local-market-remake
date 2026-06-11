@@ -39,6 +39,11 @@ def write_table(df: pd.DataFrame, path: Path) -> Path:
     return out
 
 
+def is_quarter_snapshot_code(quarter: str) -> bool:
+    """5자리 숫자 분기 코드(예: 20254)만 스냅샷으로 인정한다."""
+    return quarter.isdigit() and len(quarter) == 5
+
+
 def list_quarter_snapshots(processed_dir: Path, prefix: str) -> list[Path]:
     """분기 스냅샷 파일 목록 (분기당 Parquet 우선)."""
     by_quarter: dict[str, Path] = {}
@@ -46,7 +51,7 @@ def list_quarter_snapshots(processed_dir: Path, prefix: str) -> list[Path]:
         if candidate.suffix not in {".csv", ".parquet"}:
             continue
         quarter = candidate.stem.removeprefix(prefix)
-        if quarter == "final":
+        if not is_quarter_snapshot_code(quarter):
             continue
         existing = by_quarter.get(quarter)
         if existing is None or (existing.suffix == ".csv" and candidate.suffix == ".parquet"):
