@@ -92,8 +92,12 @@ def _read_str_setting(key: str, default: str = "") -> str:
     if val:
         return val
     secrets = _get_streamlit_secrets()
-    if secrets is not None and key in secrets:
-        return str(secrets[key]).strip()
+    if secrets is not None:
+        try:
+            if key in secrets:
+                return str(secrets[key]).strip()
+        except Exception:
+            pass
     return default
 
 

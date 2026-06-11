@@ -140,3 +140,15 @@ def test_paginate_requires_api_key(monkeypatch):
     monkeypatch.setattr(config, "SEOUL_API_KEY", "")
     with pytest.raises(RuntimeError, match="API 키"):
         list(utils.paginate(SERVICE))
+
+
+def test_read_str_setting_tolerates_missing_streamlit_secrets(monkeypatch):
+    """CI 처럼 secrets.toml 이 없을 때도 설정 읽기가 실패하지 않아야 한다."""
+    monkeypatch.delenv("SEOUL_API_KEY", raising=False)
+
+    class BrokenSecrets:
+        def __contains__(self, key):
+            raise FileNotFoundError("No secrets found")
+
+    monkeypatch.setattr(config, "_get_streamlit_secrets", lambda: BrokenSecrets())
+    assert config._read_str_setting("SEOUL_API_KEY", "fallback") == "fallback"
