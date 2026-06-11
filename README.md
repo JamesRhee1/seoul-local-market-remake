@@ -32,8 +32,9 @@ API 키나 대용량 데이터가 없어도, 저장소에 포함된 소형 샘�
 - 총 점포 수 / 개업 / 폐업 KPI 카드 표시
 - 업종 및 자치구 기준 필터링
 - 자치구별 개업 vs 폐업 Plotly 막대그래프 시각화
-- **업종별 분기 추이** 라인 차트 (다분기 스냅샷 축적 시)
-- **상권 단위 점포 밀도** pydeck 지도 (수집·전처리 데이터)
+- **3개 탭** — 현황 분석 / 업종별 분기 추이 / 점포 밀도 지도
+- **업종별 분기 추이** 2단 패널 차트 (2025년 1~4분기, `2025-4분기` 라벨)
+- **상권 단위 점포 밀도** pydeck 지도 (크기·색상 ∝ 밀도)
 - 원본 데이터 테이블 조회
 - KPI·집계 등 지표 계산 로직 모듈화 (순수 함수)
 - `pytest` 기반 단위 테스트 지원
@@ -159,9 +160,10 @@ TARGET_QUARTER = "20254"
 - 업종별 점포 수는 어떻게 다른가?
 - 자치구별 개업/폐업 흐름은 어떻게 다른가?
 - 특정 업종을 선택했을 때 자치구별 경쟁 강도는 어떻게 나타나는가?
-- 샘플 데이터와 실제 가공 데이터를 바꿔가며 대시보드를 테스트할 수 있는가?
+- 2025년 4분기 동안 특정 업종의 개업·폐업 추이는 어떻게 변했는가?
+- 상권 단위로 점포가 어디에 밀집해 있는가?
 
-사이드바에서 업종과 자치구를 선택하면 KPI 카드와 자치구별 개업/폐업 차트가 함께 갱신됩니다.
+사이드바에서 업종과 자치구를 선택하면 KPI·막대 차트·분기 추이·지도가 함께 갱신됩니다.
 
 ---
 
@@ -216,8 +218,8 @@ TARGET_QUARTER = "20254"
 
 ## 데이터 파이프라인 & 시스템 아키텍처
 
-데이터는 **외부 API → ETL → CSV 저장소 → 분석 → Streamlit UI** 순으로 흐릅니다.
-DB 없이 CSV 파일만 사용하며, `src/` 패키지로 각 단계가 분리되어 있습니다.
+데이터는 **외부 API → ETL → Parquet 저장소 → 분석 → Streamlit UI** 순으로 흐릅니다.
+DB 없이 Parquet(레거시 CSV 폴백) 파일을 사용하며, `src/` 패키지로 각 단계가 분리되어 있습니다.
 
 <p align="center">
   <img src="docs/architecture.png" alt="서울시 상권 데이터 분석 대시보드 — 데이터 파이프라인 & 아키텍처" width="100%">
@@ -229,8 +231,8 @@ DB 없이 CSV 파일만 사용하며, `src/` 패키지로 각 단계가 분리�
 |---|---|---|---|
 | **외부** | 파란색 | 사용자, 개발자, 서울 열린데이터 광장 API, `.env` | 브라우저·CLI 접점과 외부 데이터·인증 제공 |
 | **ETL 파이프라인** | 초록색 | `collector.py`, `preprocessor.py`, `utils.py`, `config.py` | API 수집, Star Schema 병합(`TRDAR_CD`), 전처리 |
-| **데이터 저장소** | 노란색 | `data/raw/`, `data/processed/`, `data/sample/` | CSV 기반 저장. processed 우선, 없으면 sample 폴백 |
-| **분석** | 청록색 | `data_loader.py`, `metrics.py`, `charts.py`, `report.py` | 로딩, KPI·집계, Plotly 차트, README 인사이트 |
+| **데이터 저장소** | 노란색 | `data/raw/`, `data/processed/`, `data/sample/` | Parquet 기반(분기 스냅샷). processed 우선, 없으면 sample 폴백 |
+| **분석** | 청록색 | `data_loader.py`, `metrics.py`, `charts.py`, `maps.py`, `report.py` | 로딩, KPI·집계, Plotly/pydeck 시각화, README 인사이트 |
 | **표현/UI** | 검정 | `app.py` (Streamlit) | 사이드바 필터, KPI 카드, 차트, 원본 데이터 테이블 |
 
 - **실선 화살표**: API → 수집 → 전처리 → 분석 → 대시보드로 이어지는 주 데이터 흐름
@@ -242,13 +244,13 @@ DB 없이 CSV 파일만 사용하며, `src/` 패키지로 각 단계가 분리�
 flowchart TD
     A["🌐 서울 열린데이터 광장 API<br/>(점포 · 위치 데이터)"]:::source
     B["⬇️ collector.py<br/>데이터 수집"]:::collect
-    C["📁 data/raw<br/>수집 원본 CSV"]:::store
-    D["🧹 preprocessor.py<br/>병합 · 정제"]:::process
-    E["📦 data/processed<br/>분석용 데이터"]:::store
-    F["🔄 data_loader.py<br/>데이터 로딩 (없으면 샘플 폴백)"]:::load
-    G["📐 metrics.py<br/>KPI · 집계 계산"]:::analyze
-    H["📊 charts.py<br/>Plotly 차트 생성"]:::analyze
-    I["🖥️ Streamlit 대시보드<br/>app.py"]:::dashboard
+    C["📁 data/raw<br/>수집 원본 Parquet"]:::store
+    D["🧹 preprocessor.py<br/>병합 · 좌표 · 분기 스냅샷"]:::process
+    E["📦 data/processed<br/>분기별 Parquet"]:::store
+    F["🔄 data_loader.py<br/>로딩 (없으면 sample 폴백)"]:::load
+    G["📐 metrics.py<br/>KPI · 집계"]:::analyze
+    H["📊 charts.py · maps.py<br/>Plotly · pydeck"]:::analyze
+    I["🖥️ Streamlit 대시보드<br/>app.py (3탭)"]:::dashboard
 
     A --> B --> C --> D --> E --> F --> G --> H --> I
 
@@ -292,14 +294,19 @@ seoul-local-market-remake/
 │   ├── maps.py             # pydeck 지도
 │   ├── storage.py          # Parquet/CSV I/O
 │   ├── geo.py              # TM→WGS84 좌표 변환
+│   ├── sample_data.py      # processed → sample 분기 스냅샷
 │   └── report.py           # 리포트/인사이트 생성
 ├── run_pipeline.py         # 수집→전처리→리포트 오케스트레이터
-├── tests/
+├── tests/                  # pytest 46개 (CI: ruff + pytest)
 │   ├── test_metrics.py
 │   ├── test_preprocessor.py
 │   ├── test_charts.py
 │   ├── test_data_loader.py
 │   ├── test_storage.py
+│   ├── test_maps.py
+│   ├── test_geo.py
+│   ├── test_sample_data.py
+│   ├── test_utils.py
 │   └── test_report.py
 └── docs/
     ├── architecture.png      # 시스템 아키텍처 인포그래픽
@@ -426,7 +433,8 @@ GitHub Actions(`.github/workflows/ci.yml`)에서 push/PR 마다 Python 3.11/3.12
 
 ## 향후 개선 과제
 
-- 대시보드 UI 스크린샷 추가 (시스템 아키텍처 다이어그램은 `docs/architecture.png` 참고)
+- 대시보드 UI 스크린샷 추가 (3탭: 현황·추이·지도)
 - Cloud 배포 시 processed 데이터 외부 스토리지 연동
-- 데이터 수집 스케줄링 (분기별 자동 스냅샷)
+- 데이터 수집 스케줄링 (2025년 이후 분기 자동 스냅샷)
 - 자치구 단위 choropleth 지도 (GeoJSON 경계 데이터 연동)
+- `docs/architecture.png` 인포그래픽을 Parquet·3탭·지도 반영 버전으로 갱신
