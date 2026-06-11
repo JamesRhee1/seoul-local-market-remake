@@ -110,14 +110,17 @@ def build_insights_markdown(df: pd.DataFrame) -> str:
     top_decline = decline.index[0]
     saturated = rep_top.sort_values("store", ascending=False).iloc[0]
     saturated_name = rep_top.index[0]
-    saturated_note = "폐업이 개업을 초과(포화·경쟁 심화)" if saturated["net"] < 0 else "개업이 폐업을 상회"
+    saturated_note = (
+        "폐업이 개업을 초과(포화·경쟁 심화)" if saturated["net"] < 0 else "개업이 폐업을 상회"
+    )
 
     lines: list[str] = []
     add = lines.append
 
     add(f"> 📂 아래 수치는 **실제 수집 데이터에서 자동 생성**되었습니다 — "
         f"**최신 분기 `{q_label}` 기준**, 점포 **{_n(len(df))}행** · {n_industries}개 업종 · "
-        f"{n_districts}개 자치구 · {n_areas}개 상권. _(생성: {generated_at}, `python -m src.report`)_")
+        f"{n_districts}개 자치구 · {n_areas}개 상권. "
+        f"_(생성: {generated_at}, `python -m src.report`)_")
     add("")
 
     add('### 1. 성장하는 업종 vs 쇠퇴하는 업종 — "지금 뜨는 시장 / 지는 시장"')
@@ -137,14 +140,16 @@ def build_insights_markdown(df: pd.DataFrame) -> str:
 
     add('### 2. 창업 리스크 — "여긴 들어가면 위험한 시장인가"')
     add("")
-    add(f"점포 수 대비 폐업 비중(**폐업률**)으로 업종의 생존 난이도를 가늠합니다. (점포 {_BIG_STORE_THRESHOLD}개 이상 업종 대상)")
+    add(f"점포 수 대비 폐업 비중(**폐업률**)으로 업종의 생존 난이도를 가늠합니다. "
+        f"(점포 {_BIG_STORE_THRESHOLD}개 이상 업종 대상)")
     add("")
     add("| 업종 | 점포 수 | 폐업 | 폐업률 |")
     add("|---|--:|--:|--:|")
     for name, r in closure.iterrows():
         add(f"| {name} | {_n(r['store'])} | {_n(r['close'])} | **{r['rate']:.1f}%** |")
     add("")
-    add("→ **인사이트:** 진입장벽이 낮은 프랜차이즈형 업종일수록 회전율(폐업률)이 높음 → **과당경쟁·포화 신호**.")
+    add("→ **인사이트:** 진입장벽이 낮은 프랜차이즈형 업종일수록 회전율(폐업률)이 높음 "
+        "→ **과당경쟁·포화 신호**.")
     add("")
 
     add('### 3. 입지/경쟁 강도 — "이 업종은 어느 자치구에 집중되나"')
@@ -154,10 +159,12 @@ def build_insights_markdown(df: pd.DataFrame) -> str:
     add("| 자치구 | 점포 수 | 개업 | 폐업 | 순증 |")
     add("|---|--:|--:|--:|--:|")
     for name, r in rep_top.iterrows():
-        add(f"| {name} | {_n(r['store'])} | {_n(r['open'])} | {_n(r['close'])} | **{_signed(r['net'])}** |")
+        add(f"| {name} | {_n(r['store'])} | {_n(r['open'])} | {_n(r['close'])} "
+            f"| **{_signed(r['net'])}** |")
     add("")
-    add(f"→ **인사이트:** **{saturated_name}**{_josa(saturated_name, '은', '는')} 점포가 가장 많지만 {saturated_note} "
-        f"— \"점포가 많다 = 좋은 입지\"가 아니라 **밀집도와 순증감을 함께 봐야** 한다는 점을 보여줍니다.")
+    add(f"→ **인사이트:** **{saturated_name}**{_josa(saturated_name, '은', '는')} "
+        f"점포가 가장 많지만 {saturated_note} — \"점포가 많다 = 좋은 입지\"가 아니라 "
+        f"**밀집도와 순증감을 함께 봐야** 한다는 점을 보여줍니다.")
 
     return "\n".join(lines)
 

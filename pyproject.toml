@@ -1,0 +1,19 @@
+[project]
+name = "seoul-local-market-remake"
+description = "서울시 상권 데이터 수집·전처리·시각화 E2E 파이프라인"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".venv", "data"]
+
+[tool.ruff.lint]
+# 기본 룰셋(E/F) + import 정렬(I)
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

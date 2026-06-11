@@ -1,5 +1,6 @@
 # 🛒 서울시 상권 데이터 분석 대시보드
 
+[![CI](https://github.com/JamesRhee1/seoul-local-market-remake/actions/workflows/ci.yml/badge.svg)](https://github.com/JamesRhee1/seoul-local-market-remake/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.41-FF4B4B?style=flat&logo=streamlit&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-2.2-150458?style=flat&logo=pandas&logoColor=white)
@@ -300,19 +301,27 @@ API 키 필요 여부는 다음과 같습니다.
 
 ## 테스트 실행
 
+테스트·린트 도구는 개발용 의존성으로 분리되어 있습니다.
+
+```bash
+pip install -r requirements-dev.txt
+```
+
 ### Linux / macOS
 
 ```bash
-python3 -m py_compile app.py src/*.py
+ruff check .
 pytest
 ```
 
 ### Windows PowerShell
 
 ```powershell
-python -m py_compile app.py src\*.py
+ruff check .
 pytest
 ```
+
+GitHub Actions(`.github/workflows/ci.yml`)에서 push/PR 마다 Python 3.11/3.12 로 동일한 검사를 수행합니다.
 
 ---
 

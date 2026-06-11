@@ -75,6 +75,8 @@ def test_multi_quarter_uses_latest_only():
     assert "`20261`" in md          # 최신 분기가 헤더에 명시됨
     assert "구분기전용업종" not in md  # 과거 분기 데이터는 제외됨
     # 최신 분기 단독 결과와 동일해야 한다 (생성 시각 줄 제외)
+    def strip(text: str) -> str:
+        return "\n".join(line for line in text.splitlines() if "생성:" not in line)
+
     single = build_insights_markdown(_df())
-    strip = lambda s: "\n".join(l for l in s.splitlines() if "생성:" not in l)  # noqa: E731
     assert strip(md) == strip(single)

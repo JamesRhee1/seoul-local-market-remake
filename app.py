@@ -9,8 +9,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from src import config
-from src import charts, data_loader, metrics
+from src import charts, config, data_loader, metrics
 
 COLS = config.COLS
 

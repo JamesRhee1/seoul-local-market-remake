@@ -107,7 +107,8 @@ def paginate(
             break
 
         end = start + batch - 1
-        url = f"{config.API_BASE_URL}/{config.SEOUL_API_KEY}/json/{service}/{start}/{end}/{filter_path}"
+        url = (f"{config.API_BASE_URL}/{config.SEOUL_API_KEY}/json/"
+               f"{service}/{start}/{end}/{filter_path}")
         payload = fetch_json(url)
 
         block = payload.get(service)
