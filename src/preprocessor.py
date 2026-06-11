@@ -53,9 +53,10 @@ def build_dimension(location_df: pd.DataFrame) -> pd.DataFrame:
     """위치 원천에서 상권코드별 차원 테이블(자치구·좌표)을 만든다.
 
     상권코드당 1행을 보장해 Left Join 시 행 증식(fan-out)을 방지한다.
+    TRDAR_CD_NM 은 점포(Fact)가 이미 보유하므로 차원에 넣지 않는다(병합 시 _x/_y 분리 방지).
     """
     cols = [COLS.TRDAR_CD, COLS.DISTRICT]
-    for optional in (COLS.TRDAR_CD_NM, COLS.TM_X, COLS.TM_Y):
+    for optional in (COLS.TM_X, COLS.TM_Y):
         if optional in location_df.columns:
             cols.append(optional)
     dim = location_df[cols].copy()

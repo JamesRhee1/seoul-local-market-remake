@@ -30,8 +30,22 @@ def _location_df():
         {
             COLS.TRDAR_CD: [1001, 1001, 1002],  # 중복 포함
             COLS.DISTRICT: ["중구", "중구", "강남구"],
+            COLS.TRDAR_CD_NM: ["위치상권A", "위치상권A", "위치상권B"],
             COLS.TM_X: [197093, 197093, 198000],
             COLS.TM_Y: [453418, 453418, 454000],
+        }
+    )
+
+
+def _store_df_with_trdar_name():
+    return pd.DataFrame(
+        {
+            COLS.TRDAR_CD: [1001, 1002],
+            COLS.TRDAR_CD_NM: ["점포상권A", "점포상권B"],
+            COLS.INDUSTRY: ["커피-음료", "한식음식점"],
+            COLS.STORE_CO: [10, 5],
+            COLS.OPEN_CO: [2, 1],
+            COLS.CLOSE_CO: [1, 0],
         }
     )
 
@@ -78,6 +92,14 @@ def test_split_by_quarter_groups_rows():
     assert set(parts) == {"20253", "20254"}
     assert len(parts["20253"]) == 2
     assert len(parts["20254"]) == 1
+
+
+def test_merge_preserves_trdar_name_without_suffix_columns():
+    """점포·위치 양쪽에 TRDAR_CD_NM 이 있어도 Fact 값이 유지되어야 한다."""
+    merged = merge_market_data(_store_df_with_trdar_name(), _location_df())
+    assert COLS.TRDAR_CD_NM in merged.columns
+    assert not any(str(c).endswith("_x") or str(c).endswith("_y") for c in merged.columns)
+    assert merged[COLS.TRDAR_CD_NM].tolist() == ["점포상권A", "점포상권B"]
 
 
 def test_merge_attaches_district_and_handles_unknown():
