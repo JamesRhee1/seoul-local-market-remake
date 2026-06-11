@@ -4,6 +4,8 @@
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
 
@@ -20,11 +22,14 @@ st.set_page_config(
 
 
 @st.cache_data(show_spinner="데이터 로딩 중...")
-def get_data():
-    path, source = data_loader.resolve_data_path()
-    if path is None:
-        return pd.DataFrame(), source
-    return data_loader.load_market_data(path), source
+def get_data(path: str, mtime: float) -> pd.DataFrame:
+    """CSV 를 읽어 캐시한다.
+
+    path/mtime 이 캐시 키가 되므로, 전처리로 파일이 새로 생성되면
+    (mtime 변경) 재실행 시 자동으로 캐시가 무효화된다.
+    """
+    del mtime  # 캐시 키 전용 인자
+    return data_loader.load_market_data(Path(path))
 
 
 def _default_industry_index(industries: list[str]) -> int:
@@ -35,7 +40,11 @@ def _default_industry_index(industries: list[str]) -> int:
 
 
 def main() -> None:
-    df, source = get_data()
+    path, source = data_loader.resolve_data_path()
+    if path is None:
+        df = pd.DataFrame()
+    else:
+        df = get_data(str(path), path.stat().st_mtime)
 
     st.title("🛒 서울시 로컬 상권 분석 대시보드")
     st.caption("Source: 서울 열린데이터 광장 (Seoul Open Data Plaza)")
@@ -94,7 +103,7 @@ def main() -> None:
         st.dataframe(filtered[view_cols], use_container_width=True)
 
 
+# Streamlit 은 `streamlit run` 시 이 스크립트를 __main__ 으로 실행하므로
+# 별도의 else 분기(import 부수효과) 없이 표준 가드만으로 충분하다.
 if __name__ == "__main__":
-    main()
-else:
     main()

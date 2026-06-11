@@ -61,8 +61,28 @@ def _representative_industry(df: pd.DataFrame, stats: pd.DataFrame) -> str:
     return stats["store"].idxmax()
 
 
+def _latest_quarter_only(df: pd.DataFrame) -> tuple[pd.DataFrame, str]:
+    """여러 분기가 섞여 있으면 최신 분기만 남긴다 (순수 함수).
+
+    분기 구분 없이 합산하면 개업/폐업이 분기 수만큼 부풀어 인사이트가
+    왜곡되므로, 항상 단일(최신) 분기 기준으로 계산한다.
+
+    Returns:
+        (필터링된 DataFrame, 분기 라벨)
+    """
+    if C.QUARTER not in df.columns:
+        return df, "N/A"
+    quarters = sorted(str(q) for q in df[C.QUARTER].dropna().unique())
+    if not quarters:
+        return df, "N/A"
+    latest = quarters[-1]
+    filtered = df[df[C.QUARTER].astype(str) == latest]
+    return filtered, latest
+
+
 def build_insights_markdown(df: pd.DataFrame) -> str:
     """데이터프레임에서 인사이트 마크다운 본문을 생성한다 (순수 함수)."""
+    df, q_label = _latest_quarter_only(df)
     stats = _industry_stats(df)
     growth = stats.sort_values("net", ascending=False).head(3)
     decline = stats.sort_values("net").head(3)
@@ -80,8 +100,6 @@ def build_insights_markdown(df: pd.DataFrame) -> str:
     rep_dist["net"] = rep_dist["open"] - rep_dist["close"]
     rep_top = rep_dist.sort_values("store", ascending=False).head(3)
 
-    quarters = sorted(str(q) for q in df["STDR_YYQU_CD"].unique()) if "STDR_YYQU_CD" in df.columns else []
-    q_label = ", ".join(quarters) if quarters else "N/A"
     n_districts = df[C.DISTRICT].nunique()
     n_industries = df[C.INDUSTRY].nunique()
     n_areas = df[C.TRDAR_CD_NM].nunique() if C.TRDAR_CD_NM in df.columns else 0
@@ -98,7 +116,7 @@ def build_insights_markdown(df: pd.DataFrame) -> str:
     add = lines.append
 
     add(f"> 📂 아래 수치는 **실제 수집 데이터에서 자동 생성**되었습니다 — "
-        f"분기 `{q_label}`, 점포 **{_n(len(df))}행** · {n_industries}개 업종 · "
+        f"**최신 분기 `{q_label}` 기준**, 점포 **{_n(len(df))}행** · {n_industries}개 업종 · "
         f"{n_districts}개 자치구 · {n_areas}개 상권. _(생성: {generated_at}, `python -m src.report`)_")
     add("")
 

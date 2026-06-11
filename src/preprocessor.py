@@ -17,6 +17,17 @@ logger = get_logger(__name__)
 COLS = config.COLS
 
 
+def validate_schema(df: pd.DataFrame, required_cols, name: str) -> None:
+    """필수 컬럼 존재를 검증한다 (순수 함수).
+
+    컬럼이 빠진 채 병합/집계로 흘러가면 KeyError 나 전부-Unknown 같은
+    해석하기 어려운 증상이 되므로, 입력 초입에서 명시적으로 실패시킨다.
+    """
+    missing = [c for c in required_cols if c not in df.columns]
+    if missing:
+        raise ValueError(f"{name} 데이터에 필수 컬럼이 없습니다: {missing}")
+
+
 def clean_numeric(df: pd.DataFrame, columns=config.NUMERIC_COLS) -> pd.DataFrame:
     """지정한 컬럼을 숫자형으로 강제 변환하고 결측은 0으로 채운다."""
     out = df.copy()
@@ -82,19 +93,17 @@ def run() -> Path | None:
     location_df = pd.read_csv(config.RAW_LOCATION_FILE, low_memory=False)
     logger.info("로드 완료: 점포 %d행, 위치 %d행", len(store_df), len(location_df))
 
+    validate_schema(store_df, config.REQUIRED_STORE_COLS, "점포(store)")
+    validate_schema(location_df, config.REQUIRED_LOCATION_COLS, "위치(location)")
+
     merged = merge_market_data(store_df, location_df)
 
     config.PROCESSED_FILE.parent.mkdir(parents=True, exist_ok=True)
     merged.to_csv(config.PROCESSED_FILE, index=False, encoding="utf-8-sig")
     logger.info("전처리 완료: %s (%d행)", config.PROCESSED_FILE, len(merged))
 
-    # 데이터가 바뀌었으니 README 인사이트도 자동 갱신 (실패해도 전처리는 성공으로 둔다)
-    try:
-        from . import report
-        report.update_readme(df=merged)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("README 자동 갱신 실패(무시): %s", exc)
-
+    # README 인사이트 갱신은 run_pipeline.py 오케스트레이터가 담당한다.
+    # (전처리 모듈이 report 에 의존하면 단계 간 결합이 생기므로 분리)
     return config.PROCESSED_FILE
 
 

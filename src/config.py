@@ -32,6 +32,9 @@ SAMPLE_FILE = SAMPLE_DIR / "seoul_market_sample.csv"
 # -----------------------------------------------------------------------------
 # 서울 열린데이터 광장 API
 # -----------------------------------------------------------------------------
+# TODO(보안): 2026-06 기준 openapi.seoul.go.kr 은 HTTPS 를 지원하지 않는다
+# (8088 포트는 평문 HTTP 전용, 443 포트는 응답 없음 — curl 로 확인).
+# 공식적으로 HTTPS 엔드포인트가 열리면 https 로 전환할 것.
 API_BASE_URL = "http://openapi.seoul.go.kr:8088"
 SERVICE_STORE = "VwsmTrdarStorQq"   # 상권-점포 (Fact)
 SERVICE_LOCATION = "TbgisTrdarRelm"  # 상권 영역 (Dimension)
@@ -78,9 +81,14 @@ class Columns:
     STORE_CO: str = "STOR_CO"                 # 점포 수
     OPEN_CO: str = "OPBIZ_STOR_CO"            # 개업 점포 수
     CLOSE_CO: str = "CLSBIZ_STOR_CO"          # 폐업 점포 수
+    QUARTER: str = "STDR_YYQU_CD"             # 기준 년분기 코드 (예: 20261)
 
 
 COLS = Columns()
 
 # 분석에 필요한 수치형 컬럼 (전처리 시 형변환 대상)
 NUMERIC_COLS = (COLS.STORE_CO, COLS.OPEN_CO, COLS.CLOSE_CO)
+
+# 전처리 입력 검증용 필수 컬럼 (없으면 병합/집계가 조용히 깨지므로 초입에서 실패시킨다)
+REQUIRED_STORE_COLS = (COLS.TRDAR_CD, COLS.INDUSTRY, *NUMERIC_COLS)
+REQUIRED_LOCATION_COLS = (COLS.TRDAR_CD, COLS.DISTRICT)
