@@ -222,10 +222,12 @@ TARGET_QUARTER = "20254"
 DB 없이 Parquet(레거시 CSV 폴백) 파일을 사용하며, `src/` 패키지로 각 단계가 분리되어 있습니다.
 
 <p align="center">
-  <img src="docs/architecture.png" alt="서울시 상권 데이터 분석 대시보드 — 데이터 파이프라인 & 아키텍처" width="100%">
+  <img src="docs/architecture.png" alt="서울시 상권 분석 대시보드 — 데이터 파이프라인" width="100%">
 </p>
 
-다이어그램은 프로젝트 전체 구조를 5개 계층으로 정리한 것입니다.
+인포그래픽은 프로젝트 전체 구조를 5개 계층(외부 → ETL → 저장소 → 분석 → 대시보드)으로 정리한 것입니다.
+`run_pipeline.py` 오케스트레이션(점선), `geo.py` 좌표 변환, `sample` 폴백, Streamlit 3탭(현황/추이/지도)이 반영되어 있습니다.
+이전 단선형 버전은 [`docs/architecture_legacy.png`](docs/architecture_legacy.png) 에 보관합니다.
 
 | 계층 | 색상 | 구성 요소 | 역할 |
 |---|---|---|---|
@@ -347,7 +349,8 @@ seoul-local-market-remake/
 │   ├── test_report.py
 │   └── test_pipeline_integration.py  # 전처리 멱등성 통합 검증
 └── docs/
-    ├── architecture.png      # 시스템 아키텍처 인포그래픽
+    ├── architecture.png        # 시스템 아키텍처 인포그래픽 (현행)
+    ├── architecture_legacy.png # 구버전 인포그래픽 (단선형 파이프라인)
     └── project_notes.md
 ```
 
@@ -475,4 +478,3 @@ GitHub Actions(`.github/workflows/ci.yml`)에서 push/PR 마다 Python 3.11/3.12
 - Cloud 배포 시 processed 데이터 외부 스토리지 연동
 - 데이터 수집 스케줄링 (2025년 이후 분기 자동 스냅샷)
 - 자치구 단위 choropleth 지도 (GeoJSON 경계 데이터 연동)
-- `docs/architecture.png` 인포그래픽을 Parquet·3탭·지도 반영 버전으로 갱신

@@ -157,9 +157,17 @@ seoul-local-market-remake/
 │   └── report.py           # README AUTO-INSIGHTS
 ├── tests/                  # 52개
 └── docs/
-    ├── architecture.png
+    ├── architecture.png        # 현행 인포그래픽 (오케스트레이터·3탭·지도)
+    ├── architecture_legacy.png # 구버전 (단선형 파이프라인)
     └── project_notes.md
 ```
+
+### 아키텍처 인포그래픽
+
+![서울시 상권 분석 대시보드 — 데이터 파이프라인](architecture.png)
+
+- **현행** (`architecture.png`): `run_pipeline.py` 오케스트레이션, `geo.py` 좌표 변환, 분기 Parquet 저장소, sample 폴백, Streamlit 3탭(현황/추이/지도), pytest·ruff·CI·Parquet 푸터 반영
+- **구버전** (`architecture_legacy.png`): 단선형 A→B→…→I 흐름 인포그래픽 (참고용 보관)
 
 폴더별 역할:
 
@@ -350,7 +358,7 @@ streamlit run app.py
 - [x] Parquet 저장 + CSV 폴백
 - [x] Streamlit Cloud 배포 가이드 (README)
 - [x] 분기별 sample Parquet (`src/sample_data.py`)
-- [ ] `docs/architecture.png` 갱신 (Parquet·3탭·지도 반영)
+- [x] `docs/architecture.png` 갱신 (Parquet·3탭·지도·오케스트레이터 반영, 구버전 `architecture_legacy.png` 보관)
 - [ ] 데이터 수집 스케줄링 (2026년 이후 분기 자동 스냅샷)
 - [ ] 자치구 choropleth 지도 (GeoJSON)
 - [ ] Cloud 배포 시 processed 외부 스토리지 연동
@@ -370,9 +378,8 @@ streamlit run app.py
 ## 16. 다음 액션
 
 1. 대시보드 3탭 스크린샷 촬영·README 삽입
-2. `docs/architecture.png` 인포그래픽 갱신
-3. 2026년 분기 데이터 수집 시 `TARGET_QUARTER` 스케줄링 검토
-4. Obsidian Vault와 이 보고서 동기화
+2. 2026년 분기 데이터 수집 시 `TARGET_QUARTER` 스케줄링 검토
+3. Obsidian Vault와 이 보고서 동기화
 
 ---
 
