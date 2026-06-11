@@ -16,17 +16,23 @@ from .utils import get_logger, paginate
 logger = get_logger(__name__)
 
 
+_PROGRESS_LOG_EVERY = 10_000  # 진행 로그 간격 (행 수)
+
+
 def _collect(
     service: str, limit: int | None, filters: List[str] | None = None
 ) -> List[Dict[str, Any]]:
-    """주어진 서비스에서 행 목록을 수집한다."""
+    """주어진 서비스에서 행 목록을 수집한다.
+
+    limit 절단은 paginate 가 책임지므로 여기서는 누적만 한다.
+    """
     rows: List[Dict[str, Any]] = []
+    last_logged = 0
     for batch in paginate(service, limit=limit, filters=filters):
         rows.extend(batch)
-        if limit and len(rows) >= limit:
-            rows = rows[:limit]
-            break
-        if len(rows) % 10000 < config.BATCH_SIZE and rows:
+        # BATCH_SIZE 와 무관하게 1만 행마다 진행 상황을 남긴다.
+        if len(rows) - last_logged >= _PROGRESS_LOG_EVERY:
+            last_logged = len(rows)
             logger.info("%s: %d건 수집 중...", service, len(rows))
     logger.info("%s: 총 %d건 수집 완료", service, len(rows))
     return rows

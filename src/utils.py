@@ -125,9 +125,13 @@ def paginate(
         if not rows:
             break
 
+        # limit 절단은 이곳에서만 책임진다 (호출부 중복 제거).
+        if limit and collected + len(rows) > limit:
+            rows = rows[: limit - collected]
+
         yield rows
         collected += len(rows)
 
-        if len(rows) < batch:  # 마지막 페이지
+        if len(rows) < batch:  # 마지막 페이지 (또는 limit 절단)
             break
         start += batch

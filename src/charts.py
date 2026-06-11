@@ -1,6 +1,7 @@
 """Plotly 차트 생성 함수."""
 from __future__ import annotations
 
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -13,7 +14,7 @@ _COLOR_CLOSE = "#EC7063"
 _STATUS_LABELS = {COLS.OPEN_CO: "개업", COLS.CLOSE_CO: "폐업"}
 
 
-def district_open_close_bar(district_df, title: str = "") -> go.Figure:
+def district_open_close_bar(district_df: pd.DataFrame, title: str = "") -> go.Figure:
     """자치구별 개업 vs 폐업 그룹 막대그래프."""
     melted = district_df.melt(
         id_vars=COLS.DISTRICT,

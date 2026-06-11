@@ -34,7 +34,7 @@ def get_data(path: str, mtime: float) -> pd.DataFrame:
 
 def _default_industry_index(industries: list[str]) -> int:
     for i, name in enumerate(industries):
-        if "커피" in name:
+        if config.DEFAULT_INDUSTRY_KEYWORD in name:
             return i
     return 0
 

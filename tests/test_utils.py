@@ -123,6 +123,19 @@ def test_paginate_stops_on_short_last_page(requests_mock):
     assert requests_mock.call_count == 2
 
 
+def test_paginate_trims_to_limit(requests_mock):
+    """limit 절단은 paginate 단독 책임 — 총 행 수가 limit 을 넘지 않아야 한다."""
+    batch = config.BATCH_SIZE
+    requests_mock.get(
+        _page_url(1, batch),
+        json={SERVICE: {"row": _rows(batch)}},
+    )
+    limit = batch - 7  # 한 페이지보다 작은 limit
+    batches = list(utils.paginate(SERVICE, limit=limit))
+    assert sum(len(b) for b in batches) == limit
+    assert requests_mock.call_count == 1  # 추가 페이지 요청 없음
+
+
 def test_paginate_requires_api_key(monkeypatch):
     monkeypatch.setattr(config, "SEOUL_API_KEY", "")
     with pytest.raises(RuntimeError, match="API 키"):

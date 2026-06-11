@@ -24,11 +24,11 @@ END_MARKER = "<!-- AUTO-INSIGHTS:END -->"
 _BIG_STORE_THRESHOLD = 500  # 폐업률 비교 시 표본이 너무 작은 업종 제외
 
 
-def _n(x) -> str:
+def _n(x: float | int) -> str:
     return f"{int(round(float(x))):,}"
 
 
-def _signed(x) -> str:
+def _signed(x: float | int) -> str:
     v = int(round(float(x)))
     return f"+{v:,}" if v >= 0 else f"−{abs(v):,}"  # U+2212 minus
 
@@ -56,7 +56,7 @@ def _industry_stats(df: pd.DataFrame) -> pd.DataFrame:
 
 def _representative_industry(df: pd.DataFrame, stats: pd.DataFrame) -> str:
     for name in df[C.INDUSTRY].unique():
-        if isinstance(name, str) and "커피" in name:
+        if isinstance(name, str) and config.DEFAULT_INDUSTRY_KEYWORD in name:
             return name
     return stats["store"].idxmax()
 

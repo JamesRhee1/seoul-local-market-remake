@@ -92,3 +92,6 @@ NUMERIC_COLS = (COLS.STORE_CO, COLS.OPEN_CO, COLS.CLOSE_CO)
 # 전처리 입력 검증용 필수 컬럼 (없으면 병합/집계가 조용히 깨지므로 초입에서 실패시킨다)
 REQUIRED_STORE_COLS = (COLS.TRDAR_CD, COLS.INDUSTRY, *NUMERIC_COLS)
 REQUIRED_LOCATION_COLS = (COLS.TRDAR_CD, COLS.DISTRICT)
+
+# 대시보드 기본 선택/리포트 대표 업종을 고르는 키워드 (업종명에 포함되면 우선 선택)
+DEFAULT_INDUSTRY_KEYWORD = "커피"
