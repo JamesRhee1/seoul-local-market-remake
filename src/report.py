@@ -121,17 +121,16 @@ def build_insights_markdown(df: pd.DataFrame) -> str:
     n_areas = df[C.TRDAR_CD_NM].nunique() if C.TRDAR_CD_NM in df.columns else 0
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    # 동적 해석 문장
-    top_growth = growth.index[0]
-    top_decline = decline.index[0]
-    saturated = rep_top.sort_values("store", ascending=False).iloc[0]
-    saturated_name = rep_top.index[0]
-    saturated_note = (
-        "폐업이 개업을 초과(포화·경쟁 심화)" if saturated["net"] < 0 else "개업이 폐업을 상회"
-    )
+    # 입지 인사이트: 점포 1위 자치구와 순감 자치구를 대비해 "밀집 ≠ 좋은 입지"를 설명
+    top_name = rep_top.index[0]
+    top_row = rep_top.iloc[0]
+    neg_in_top = rep_top[rep_top["net"] < 0]
 
     lines: list[str] = []
     add = lines.append
+
+    top_growth = growth.index[0]
+    top_decline = decline.index[0]
 
     add(f"> 📂 아래 수치는 **실제 수집 데이터에서 자동 생성**되었습니다 — "
         f"**최신 분기 `{format_quarter_label(q_label)}` 기준**, 점포 **{_n(len(df))}행** · "
@@ -179,9 +178,30 @@ def build_insights_markdown(df: pd.DataFrame) -> str:
         add(f"| {name} | {_n(r['store'])} | {_n(r['open'])} | {_n(r['close'])} "
             f"| **{_signed(r['net'])}** |")
     add("")
-    add(f"→ **인사이트:** **{saturated_name}**{_josa(saturated_name, '은', '는')} "
-        f"점포가 가장 많지만 {saturated_note} — \"점포가 많다 = 좋은 입지\"가 아니라 "
-        f"**밀집도와 순증감을 함께 봐야** 한다는 점을 보여줍니다.")
+    if top_row["net"] < 0:
+        add(
+            f"→ **인사이트:** **{top_name}**{_josa(top_name, '은', '는')} "
+            f"점포가 가장 많지만 순증 {_signed(top_row['net'])}로 폐업이 개업을 초과 — "
+            f"\"점포가 많다 = 좋은 입지\"가 아니라 "
+            f"**밀집도와 순증감을 함께 봐야** 한다는 점을 보여줍니다."
+        )
+    elif not neg_in_top.empty:
+        contrast_name = neg_in_top["net"].idxmin()
+        contrast_net = neg_in_top.loc[contrast_name, "net"]
+        add(
+            f"→ **인사이트:** **{top_name}**{_josa(top_name, '은', '는')} "
+            f"점포 수 1위·순증 {_signed(top_row['net'])}인 반면, "
+            f"**{contrast_name}**{_josa(contrast_name, '은', '는')} "
+            f"순증 {_signed(contrast_net)}로 폐업이 개업을 앞섭니다 — "
+            f"\"점포가 많다 = 좋은 입지\"가 아니라 "
+            f"**밀집도와 순증감을 함께 봐야** 한다는 점을 보여줍니다."
+        )
+    else:
+        add(
+            f"→ **인사이트:** **{top_name}**{_josa(top_name, '은', '는')} "
+            f"점포 수 상위권에서 순증 {_signed(top_row['net'])} — "
+            f"밀집 지역이라도 분기별 순증감을 함께 확인해야 합니다."
+        )
 
     return "\n".join(lines)
 
