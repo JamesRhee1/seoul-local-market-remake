@@ -56,7 +56,7 @@ tags:
 - **무엇**: 서울시 상권(점포·위치) 데이터를 수집·전처리·분석하고 Streamlit 대시보드로 시각화하는 데이터 프로젝트.
 - **데이터 출처**: [서울 열린데이터 광장](https://data.seoul.go.kr/) 상권 API (점포 `VwsmTrdarStorQq`, 상권 영역 `TbgisTrdarRelm`).
 - **기술 스택**: Python, pandas, Streamlit, Plotly, pydeck, pyarrow, pyproj, requests, python-dotenv, pytest, ruff.
-- **분석 기준 분기**: 2025년 1~4분기 (`20251`~`20254`, UI·인사이트 최신 **2025-4분기**).
+- **분석 기준 분기**: 2025년 1분기~4분기 (분기 코드 `20251`, `20252`, `20253`, `20254` / UI·인사이트 최신 **2025-4분기**).
 - **실행 특성**:
   - 서울시 열린데이터 광장 API로 신규 데이터를 수집할 수 있다(키 필요).
   - 키나 대용량 데이터가 없어도 저장소에 포함된 **샘플 데이터로 데모 실행**이 가능하다.
@@ -142,7 +142,7 @@ seoul-local-market-remake/
 ├── data/
 │   ├── raw/                # 수집 원본 Parquet (Git 제외)
 │   ├── processed/          # 분기 스냅샷 Parquet (Git 제외)
-│   └── sample/             # 2025 1~4분기 데모 Parquet (Git 포함)
+│   └── sample/             # 2025 1분기~4분기 데모 Parquet (Git 포함)
 ├── src/
 │   ├── config.py           # .env/Secrets + DEMO_QUARTERS
 │   ├── collector.py        # API 수집
@@ -178,7 +178,7 @@ seoul-local-market-remake/
 | `app.py` | 사이드바 필터·KPI·차트 위젯을 배치하는 얇은 UI 계층. 도메인 로직은 `src`에 위임 |
 | `src/` | 수집·전처리·로딩·지표·차트·리포트 도메인 로직 패키지 |
 | `data/raw`, `data/processed` | 수집 원본·가공 결과(대용량, Git 제외) |
-| `data/sample` | 2025년 1~4분기(`20251`~`20254`) 소형 데모 Parquet 스냅샷(Git 포함) |
+| `data/sample` | 2025년 1분기~4분기 소형 데모 Parquet 스냅샷 (분기 코드 `20251`, `20252`, `20253`, `20254`, Git 포함) |
 | `tests/` | 순수 함수 단위 테스트 |
 | `docs/` | 분석 보고서 등 문서 |
 
@@ -233,7 +233,7 @@ flowchart TD
 
 1. **API 수집**: `collector`가 `TARGET_QUARTER`(예: `20254`)별로 점포·위치 데이터를 페이지네이션 수집한다.
 2. **raw 저장**: `storage.write_table`로 `data/raw/*.parquet`에 저장한다.
-3. **processed 생성**: `preprocessor.run`이 병합·좌표(`geo.py`)·분기 스냅샷(`seoul_market_{분기}.parquet`)을 생성하고 합본 `seoul_market_final.parquet`를 만든다. 문서 기준은 2025년 1~4분기이며, `DEMO_QUARTERS` 밖 스냅샷이 섞이면 `report.py`가 경고를 남긴다.
+3. **processed 생성**: `preprocessor.run`이 병합·좌표(`geo.py`)·분기 스냅샷(`seoul_market_{분기}.parquet`)을 생성하고 합본 `seoul_market_final.parquet`를 만든다. 문서 기준은 2025년 1분기~4분기이며, `DEMO_QUARTERS` 밖 스냅샷이 섞이면 `report.py`가 경고를 남긴다.
 4. **sample 생성**: `python -m src.sample_data`로 processed에서 2025 4분기 소형 샘플을 `data/sample/`에 복제한다.
 5. **sample fallback**: processed가 없으면 `data/sample` 분기 스냅샷으로 분기 추이·지도까지 데모 가능.
 6. **대시보드**: `app.py` 3탭 — 현황(KPI·막대), 분기 추이(2단 패널), 점포 밀도 지도(색상 그라데이션).
@@ -253,7 +253,7 @@ flowchart TD
 | `normalize_key` | 순수 함수 | 상권코드를 `Int64`→문자열로 정규화해 `.0` 혼선·조인 깨짐 방지 |
 | `build_dimension` | 순수 함수 | 상권코드→자치구·TM좌표 차원(`TRDAR_CD_NM` 제외 — Fact 보유), `geo.py`로 `lon`/`lat` 변환 |
 | `merge_market_data` | 순수 함수 | 점포(Fact)에 위치 차원 Left Join, `Unknown` 처리 |
-| `split_by_quarter` | 순수 함수 | 분기별 스냅샷 분할 (`20251`~`20254` 축적) |
+| `split_by_quarter` | 순수 함수 | 분기별 스냅샷 분할 (`20251`, `20252`, `20253`, `20254` 축적) |
 | `normalize_processed_dtypes` | 순수 함수 | Parquet 병합 시 dtype 통일 |
 | `run` | I/O | raw 읽기 → 병합/정제 → 분기 스냅샷·합본 Parquet 저장 |
 
@@ -309,7 +309,7 @@ streamlit run app.py
 
 - `requirements.txt`: streamlit, pandas, plotly, pyarrow, pydeck, pyproj, requests, python-dotenv
 - `requirements-dev.txt`: pytest, ruff, requests-mock
-- `config.DEMO_QUARTERS`: 2025년 1~4분기 고정
+- `config.DEMO_QUARTERS`: 2025년 1분기~4분기 고정
 - `python -m src.sample_data`로 데모 데이터 재생성 가능
 
 ---
@@ -355,7 +355,7 @@ streamlit run app.py
 
 - [ ] 대시보드 3탭 스크린샷 추가
 - [x] GitHub Actions CI (ruff + pytest, 3.11/3.12)
-- [x] 2025년 1~4분기 분기 추이 시각화 (2단 패널)
+- [x] 2025년 1분기~4분기 분기 추이 시각화 (2단 패널)
 - [x] pydeck 점포 밀도 지도 (색상·크기 그라데이션)
 - [x] Parquet 저장 + CSV 폴백
 - [x] Streamlit Cloud 배포 가이드 (README)
