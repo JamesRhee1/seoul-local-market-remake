@@ -32,7 +32,7 @@ tags:
 11. [실행 방식과 재현성 개선](#11-실행-방식과-재현성-개선)
 12. [테스트 및 검증](#12-테스트-및-검증)
 13. [포트폴리오 관점에서의 의미](#13-포트폴리오-관점에서의-의미)
-14. [남은 개선 과제](#14-남은-개선-과제)
+14. [완료된 개선 사항 및 남은 과제](#14-완료된-개선-사항-및-남은-과제)
 15. [개인 회고](#15-개인-회고)
 16. [다음 액션](#16-다음-액션)
 
@@ -305,11 +305,11 @@ python -m src.sample_data       # processed → sample
 streamlit run app.py
 ```
 
-검증 상태 (2026-06-11 기준, 문서·스크린샷 갱신 포함):
+최근 검증일: **2026-06-12** · 검증 명령: `pytest -q`, `ruff check .`
 
 | 명령 | 상태 |
 |---|---|
-| `pytest -q` | 전체 통과 |
+| `pytest -q` | 전체 통과 (54 tests) |
 | `ruff check .` | 통과 |
 | GitHub Actions | push/PR 시 Python 3.11/3.12 matrix |
 | `streamlit run app.py` | sample 4개 분기 Parquet로 3탭 데모 가능 |
@@ -361,19 +361,27 @@ streamlit run app.py
 
 ---
 
-## 14. 남은 개선 과제
+## 14. 완료된 개선 사항 및 남은 과제
 
-- [x] 대시보드 3탭 스크린샷 추가 — 현황 분석, 업종별 분기 추이, 점포 밀도 지도 화면을 README에 반영
+### 완료된 항목
+
+- [x] README 대시보드 3탭 스크린샷 추가 (현황 분석, 업종별 분기 추이, 점포 밀도 지도)
+- [x] README 목차·주요 데이터 컬럼 설명·MIT LICENSE 추가
+- [x] README와 본 문서의 모듈 수·분기 표현 정합성 정리 (12개 `src` 모듈 + `app.py`/`run_pipeline.py`)
 - [x] GitHub Actions CI (ruff + pytest, 3.11/3.12)
-- [x] 2025년 1분기~4분기 분기 추이 시각화 (2단 패널)
+- [x] 2025년 1~4분기 분기 추이 시각화 (2단 패널)
 - [x] pydeck 점포 밀도 지도 (색상·크기 그라데이션)
 - [x] Parquet 저장 + CSV 폴백
 - [x] Streamlit Cloud 배포 가이드 (README)
 - [x] 분기별 sample Parquet (`src/sample_data.py`)
 - [x] `docs/architecture.png` 갱신 v3 (SVG·gen_infographic.py 포함, 구버전 `docs/archive/` v1·v2 보관)
-- [ ] 데이터 수집 스케줄링 (2026년 이후 분기 자동 스냅샷)
-- [ ] 자치구 choropleth 지도 (GeoJSON)
-- [ ] Cloud 배포 시 processed 외부 스토리지 연동
+
+### 남은 과제
+
+- [ ] 2026년 이후 데이터 수집 스케줄링 자동화
+- [ ] 자치구 단위 choropleth 지도 (GeoJSON)
+- [ ] Cloud 배포 시 processed 데이터 외부 스토리지 연동
+- [ ] Playwright 기반 스크린샷 자동 캡처 스크립트 검토 (추후 자동화 후보)
 
 ---
 
