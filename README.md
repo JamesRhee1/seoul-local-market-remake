@@ -8,6 +8,20 @@
 
 서울시 열린데이터 광장의 상권 데이터를 **수집 → 전처리 → 분석 → 시각화**하는 Streamlit 대시보드 프로젝트입니다.
 
+## 목차
+
+- [프로젝트 개요](#프로젝트-개요)
+- [대시보드 미리보기](#대시보드-미리보기)
+- [주요 기능](#주요-기능)
+- [설치 및 실행](#설치-및-실행-방법)
+- [데이터 파이프라인](#데이터-파이프라인--시스템-아키텍처)
+- [프로젝트 구조](#프로젝트-구조)
+- [주요 데이터 컬럼](#주요-데이터-컬럼)
+- [테스트](#테스트-실행)
+- [향후 개선 과제](#향후-개선-과제)
+- [리메이크 방향](#리메이크-방향)
+- [라이선스](#라이선스)
+
 ---
 
 ## 프로젝트 개요
@@ -21,7 +35,29 @@
 
 API 키나 대용량 데이터가 없어도, 저장소에 포함된 소형 샘플 데이터로 대시보드를 바로 실행할 수 있습니다.
 
-이 README는 **설치·실행·사용법**을 다룹니다. 리메이크 배경, 기존 프로젝트 대비 개선점, 파이프라인·모듈 설계 회고는 **[프로젝트 노트](docs/project_notes.md)** (`docs/project_notes.md`)에서 확인할 수 있습니다.
+이 README는 **설치·실행·사용법**을 다룹니다. 리메이크 배경, 기존 프로젝트 대비 개선점, 파이프라인·모듈 설계 회고는 **[프로젝트 노트](docs/project_notes.md)**에서 확인할 수 있습니다.
+
+---
+
+## 대시보드 미리보기
+
+사이드바에서 업종·자치구·분기를 바꾸면 KPI, 자치구별 개업/폐업, 4개 분기 추이, 점포 밀도 지도를 한 화면 흐름으로 탐색할 수 있습니다.
+
+![서울시 로컬 상권 분석 대시보드 - 현황 분석](docs/screenshots/dashboard_overview.png)
+
+<details>
+<summary>업종별 분기 추이 보기</summary>
+
+![서울시 로컬 상권 분석 대시보드 - 업종별 분기 추이](docs/screenshots/dashboard_trend.png)
+
+</details>
+
+<details>
+<summary>점포 밀도 지도 보기</summary>
+
+![서울시 로컬 상권 분석 대시보드 - 점포 밀도 지도](docs/screenshots/dashboard_map.png)
+
+</details>
 
 ---
 
@@ -94,7 +130,7 @@ processed 데이터가 있을 때, 분기별 소형 샘플을 `data/sample/` 에
 python -m src.sample_data
 ```
 
-생성 결과 (2025년 4분기 각 250행 샘플 + 합본):
+생성 결과 (2025년 1~4분기, 분기별 250행 샘플 + 합본):
 
 ```
 data/sample/seoul_market_20251.parquet
@@ -141,7 +177,7 @@ TARGET_QUARTER = "20254"
 | API 키 | `.env` 의 `SEOUL_API_KEY` | Secrets 의 `SEOUL_API_KEY` |
 | 데모 실행 | `data/sample/` 폴백 | 동일 (저장소에 포함) |
 | 가공 데이터 | `data/processed/` (Git 제외) | Cloud 빌드에 없음 → 샘플 폴백 |
-| 분기 추이·지도 | processed 재생성 후 사용 | `data/sample/` 2025 4분기 샘플로 데모 가능 |
+| 분기 추이·지도 | processed 재생성 후 사용 | `data/sample/` 2025년 1~4분기 샘플로 데모 가능 |
 
 > **권장:** Community Cloud 앱은 **대시보드 전시용**으로 두고, 데이터 수집·전처리(`run_pipeline.py`)는 로컬 또는 CI/스케줄러에서 실행한 뒤 `data/processed` 를 별도 스토리지로 관리하는 방식이 안전합니다. processed 를 Cloud 에 포함시키려면 Git LFS·외부 스토리지 연동 등 추가 설계가 필요합니다.
 
@@ -162,7 +198,7 @@ TARGET_QUARTER = "20254"
 - 업종별 점포 수는 어떻게 다른가?
 - 자치구별 개업/폐업 흐름은 어떻게 다른가?
 - 특정 업종을 선택했을 때 자치구별 경쟁 강도는 어떻게 나타나는가?
-- 2025년 4분기 동안 특정 업종의 개업·폐업 추이는 어떻게 변했는가?
+- 2025년 1~4분기 동안 특정 업종의 개업·폐업 추이는 어떻게 변했는가?
 - 상권 단위로 점포가 어디에 밀집해 있는가?
 
 사이드바에서 업종과 자치구를 선택하면 KPI·막대 차트·분기 추이·지도가 함께 갱신됩니다.
@@ -236,7 +272,7 @@ DB 없이 Parquet(레거시 CSV 폴백) 파일을 사용하며, `src/` 패키지
 |---|---|---|---|
 | **외부** | 파란색 | 사용자, 개발자, 서울 열린데이터 광장 API, `.env` | 브라우저·CLI 접점과 외부 데이터·인증 제공 |
 | **ETL 파이프라인** | 초록색 | `run_pipeline.py`, `collector.py`, `preprocessor.py`, `geo.py`, `storage.py` | 오케스트레이션, API 수집, Star Schema 병합(`TRDAR_CD`), TM→WGS84, Parquet I/O |
-| **데이터 저장소** | 노란색 | `data/raw/`, `data/processed/` (분기 Parquet + final 합본), `data/sample/` | Parquet 우선·CSV 폴백. processed 우선, 없으면 sample 폴백 |
+| **데이터 저장소** | 노란색 | `data/raw/`, `data/processed/` (분기별 Parquet + final 합본), `data/sample/` | Parquet 우선·CSV 폴백. processed 우선, 없으면 sample 폴백 |
 | **분석** | 청록색 | `data_loader.py`, `metrics.py`, `charts.py`, `maps.py`, `report.py`, `sample_data.py` | 로딩, KPI·집계, Plotly/pydeck 시각화, README 인사이트, 데모 샘플 생성 |
 | **표현/UI** | 검정 | `app.py` (Streamlit, 3탭) | 현황·분기 추이·점포 밀도 지도, 사이드바 필터, KPI 카드 |
 
@@ -356,6 +392,7 @@ seoul-local-market-remake/
     ├── architecture.svg        # 벡터 원본
     ├── gen_infographic.py      # SVG/PNG 재생성 스크립트
     ├── archive/                # 구버전 (v1·v2)
+    ├── screenshots/            # 대시보드 3탭 스크린샷 (README 미리보기)
     └── project_notes.md
 ```
 
@@ -405,7 +442,7 @@ API 키 필요 여부는 다음과 같습니다.
 - `data/sample` 은 **2025년 1분기~4분기** (분기 코드 `20251`, `20252`, `20253`, `20254`) 스냅샷과 합본(`seoul_market_final.parquet`)을 포함합니다.
 - README AUTO-INSIGHTS도 동일 기준(**최신 2025-4분기**)으로 생성됩니다. `DEMO_QUARTERS` 밖 스냅샷(예: `20261`)이 `data/processed/` 에 남아 있으면 인사이트 기준이 어긋날 수 있으니 정리 후 `python -m src.report` 를 실행하세요.
 - `python -m src.sample_data` 로 processed 에서 재생성할 수 있습니다.
-- `data/raw`, `data/processed` 는 대용량이거나 재생성 가능한 데이터이므로 Git 추적에서 제외하며, 로컬 또는 Nextcloud 등에서 관리합니다.
+- `data/raw`, `data/processed` 는 대용량이거나 재생성 가능한 데이터이므로 Git 추적에서 제외하며, 로컬 또는 외부 스토리지에서 관리합니다.
 - 대시보드는 `data/processed` 데이터가 있으면 이를 우선 사용하고, 없으면 `data/sample` 데이터로 실행되도록 설계되어 있습니다.
 
 ---
@@ -436,24 +473,27 @@ API 키 필요 여부는 다음과 같습니다.
 
 ---
 
+## 주요 데이터 컬럼
+
+| 컬럼명 | 의미 | 사용 위치 |
+|---|---|---|
+| `SIGNGU_CD_NM` | 자치구명 | 자치구별 집계, 사이드바 필터 |
+| `TRDAR_CD_NM` | 상권명 | 상권 단위 분석, 지도 툴팁 |
+| `TRDAR_CD` | 상권 코드 | Fact·Dimension 조인 키 |
+| `SVC_INDUTY_CD_NM` | 업종명 | 업종 필터, 업종별 추이 |
+| `STOR_CO` | 점포 수 | KPI, 막대 차트, 지도 밀도 |
+| `OPBIZ_STOR_CO` | 개업 점포 수 | KPI, 개업/폐업 비교, 분기 추이 |
+| `CLSBIZ_STOR_CO` | 폐업 점포 수 | KPI, 폐업률, 개업/폐업 비교 |
+| `STDR_YYQU_CD` | 기준 년분기 코드 (예: `20254`) | 분기 필터, 추이 차트, 스냅샷 파일명 |
+
+---
+
 ## 테스트 실행
 
 테스트·린트 도구는 개발용 의존성으로 분리되어 있습니다.
 
 ```bash
 pip install -r requirements-dev.txt
-```
-
-### Linux / macOS
-
-```bash
-ruff check .
-pytest
-```
-
-### Windows PowerShell
-
-```powershell
 ruff check .
 pytest
 ```
@@ -464,23 +504,20 @@ GitHub Actions(`.github/workflows/ci.yml`)에서 push/PR 마다 Python 3.11/3.12
 
 ## 리메이크 방향
 
-이 프로젝트는 기존 서울시 상권 분석 프로젝트를 기반으로, 데이터 수집·전처리·분석·시각화 로직을 모듈화한 리메이크 버전입니다.
-
-기존 프로젝트의 핵심 아이디어는 유지하되, 다음 부분을 개선했습니다.
-
-- `app.py` 중심 구조를 `src/` 기반 모듈 구조로 분리
-- `.env` 기반 API 키 관리
-- 샘플 데이터 기반 데모 실행 지원
-- 테스트 가능한 지표 계산 함수 분리
-- Streamlit 대시보드 구조 개선
-
-자세한 비교 분석과 리메이크 과정은 별도 보고서(`docs/`)에서 다룹니다.
+이 저장소는 기존 상권 분석 프로젝트를 데이터 파이프라인, 테스트, 문서화, 대시보드 구조 관점에서 다시 설계한 리메이크 버전입니다.
+세부적인 개선 배경과 설계 판단은 [프로젝트 노트](docs/project_notes.md)에서 확인할 수 있습니다.
 
 ---
 
 ## 향후 개선 과제
 
-- 대시보드 UI 스크린샷 추가 (3탭: 현황·추이·지도)
 - Cloud 배포 시 processed 데이터 외부 스토리지 연동
-- 데이터 수집 스케줄링 (2025년 이후 분기 자동 스냅샷)
+- 데이터 수집 스케줄링 (2026년 이후 분기 자동 스냅샷)
 - 자치구 단위 choropleth 지도 (GeoJSON 경계 데이터 연동)
+- Playwright 기반 대시보드 스크린샷 자동 캡처
+
+---
+
+## 라이선스
+
+이 프로젝트는 MIT License를 따릅니다. 자세한 내용은 [LICENSE](LICENSE)를 참고하세요.

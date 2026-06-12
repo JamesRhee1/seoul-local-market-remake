@@ -2,7 +2,7 @@
 title: 서울시 상권 데이터 분석 프로젝트 리메이크 보고서
 created: 2026-06-08
 type: project-report
-status: draft
+status: updated
 tags:
   - project
   - python
@@ -113,7 +113,7 @@ tags:
 
 | 항목 | 기존 버전 | 리메이크 버전 | 개선 효과 |
 |---|---|---|---|
-| 프로젝트 구조 | 단일 앱(`app.py`) 중심 | `src/` 모듈 구조(15개+ 모듈) + `run_pipeline.py` | 유지보수성·가독성 향상 |
+| 프로젝트 구조 | 단일 앱(`app.py`) 중심 | 12개 `src` 모듈과 `app.py`, `run_pipeline.py` 진입점 | 유지보수성·가독성 향상 |
 | 데이터 로딩 | 특정 가공 파일에 의존 | processed 우선, 없으면 sample fallback (`data_loader.resolve_data_path`) | 실행 안정성 향상 |
 | API 키 관리 | 설정 파일 중심 | `.env` 기반(`config.py` + python-dotenv), 로그 키 마스킹 | 민감정보 관리 개선 |
 | 수집 안정성 | 타임아웃·재시도 개선 여지 | `utils.fetch_json` 타임아웃·재시도·지수 백오프 | 일시적 오류에 견고 |
@@ -136,21 +136,26 @@ seoul-local-market-remake/
 ├── app.py                  # Streamlit 진입점 (3탭 UI)
 ├── run_pipeline.py         # 수집→전처리→README 갱신 오케스트레이터
 ├── README.md
+├── pyproject.toml          # ruff·pytest 설정 (CI와 동일 규칙)
 ├── requirements.txt
 ├── requirements-dev.txt    # pytest, ruff
 ├── .env.example
+├── .github/
+│   └── workflows/
+│       └── ci.yml          # push/PR: ruff + pytest (3.11/3.12)
 ├── data/
 │   ├── raw/                # 수집 원본 Parquet (Git 제외)
 │   ├── processed/          # 분기 스냅샷 Parquet (Git 제외)
-│   └── sample/             # 2025 1분기~4분기 데모 Parquet (Git 포함)
+│   └── sample/             # 2025년 1~4분기 데모 Parquet (Git 포함)
 ├── src/
 │   ├── config.py           # .env/Secrets + DEMO_QUARTERS
+│   ├── utils.py            # 로깅·재시도 HTTP·페이지네이션
 │   ├── collector.py        # API 수집
 │   ├── preprocessor.py     # 병합·좌표·분기 스냅샷
 │   ├── data_loader.py      # processed/sample 폴백·분기 추이 로딩
 │   ├── storage.py          # Parquet/CSV I/O
 │   ├── geo.py              # TM→WGS84
-│   ├── metrics.py          # KPI·집계·format_quarter_label
+│   ├── metrics.py          # KPI·집계·format_quarter_label·지도 집계
 │   ├── charts.py           # Plotly (막대·2단 추이)
 │   ├── maps.py             # pydeck 밀도 지도
 │   ├── sample_data.py      # processed→sample 생성
@@ -161,6 +166,7 @@ seoul-local-market-remake/
     ├── architecture.svg        # 벡터 원본
     ├── gen_infographic.py      # SVG/PNG 재생성
     ├── archive/                # 구버전 v1·v2
+    ├── screenshots/              # 대시보드 3탭 스크린샷 (README 미리보기)
     └── project_notes.md
 ```
 
@@ -217,8 +223,11 @@ flowchart TD
     PROC -.-> SMP -.-> SAMPDIR
     PROC --> LOAD
     SAMPDIR -.->|폴백| LOAD
-    LOAD --> MET --> CHART --> APP
-    LOAD --> MAPS --> APP
+    LOAD --> MET
+    MET --> CHART
+    MET --> MAPS
+    CHART --> APP
+    MAPS --> APP
 
     classDef source fill:#E8F0FE,stroke:#4285F4,stroke-width:2px,color:#1a1a1a;
     classDef collect fill:#E6F4EA,stroke:#34A853,stroke-width:2px,color:#1a1a1a;
@@ -234,7 +243,7 @@ flowchart TD
 1. **API 수집**: `collector`가 `TARGET_QUARTER`(예: `20254`)별로 점포·위치 데이터를 페이지네이션 수집한다.
 2. **raw 저장**: `storage.write_table`로 `data/raw/*.parquet`에 저장한다.
 3. **processed 생성**: `preprocessor.run`이 병합·좌표(`geo.py`)·분기 스냅샷(`seoul_market_{분기}.parquet`)을 생성하고 합본 `seoul_market_final.parquet`를 만든다. 문서 기준은 2025년 1분기~4분기이며, `DEMO_QUARTERS` 밖 스냅샷이 섞이면 `report.py`가 경고를 남긴다.
-4. **sample 생성**: `python -m src.sample_data`로 processed에서 2025 4분기 소형 샘플을 `data/sample/`에 복제한다.
+4. **sample 생성**: `python -m src.sample_data`로 processed에서 2025년 1~4분기 소형 샘플을 `data/sample/`에 복제한다.
 5. **sample fallback**: processed가 없으면 `data/sample` 분기 스냅샷으로 분기 추이·지도까지 데모 가능.
 6. **대시보드**: `app.py` 3탭 — 현황(KPI·막대), 분기 추이(2단 패널), 점포 밀도 지도(색상 그라데이션).
 
@@ -274,12 +283,12 @@ flowchart TD
 | 탭 | 내용 |
 |---|---|
 | 현황 분석 | 최신 분기(`2025-4분기` 라벨) KPI, 자치구별 개업/폐업 막대 차트 |
-| 업종별 분기 추이 | 2단 패널(총 점포 / 개업·폐업), 2025년 4분기 라인 차트 |
+| 업종별 분기 추이 | 2단 패널(총 점포 / 개업·폐업), 2025년 1~4분기 라인 차트 |
 | 점포 밀도 지도 | pydeck Scatterplot, 크기·색상(파랑→노랑→빨강) ∝ 점포 수 |
 
 - **KPI/UI 분리**: `metrics.compute_kpi`, `filter_latest_quarter`, `aggregate_industry_by_quarter`, `aggregate_for_map`
 - **분기 라벨**: `metrics.format_quarter_label` — `20254` → `2025-4분기`
-- **샘플 데모**: `data/sample/` 4분기 Parquet로 API 키 없이 3탭 모두 동작
+- **샘플 데모**: `data/sample/` 2025년 4개 분기 Parquet로 API 키 없이 3탭 모두 동작
 
 ---
 
@@ -296,14 +305,15 @@ python -m src.sample_data       # processed → sample
 streamlit run app.py
 ```
 
-검증 상태 (2026-06-11 기준):
+검증 상태 (2026-06-11 기준, 문서·스크린샷 갱신 포함):
 
 | 명령 | 상태 |
 |---|---|
-| `pytest` | 전체 통과 |
+| `pytest -q` | 전체 통과 |
 | `ruff check .` | 통과 |
 | GitHub Actions | push/PR 시 Python 3.11/3.12 matrix |
-| `streamlit run app.py` | sample 4분기 Parquet로 3탭 데모 가능 |
+| `streamlit run app.py` | sample 4개 분기 Parquet로 3탭 데모 가능 |
+| README 대시보드 스크린샷 | `docs/screenshots/` 3탭 반영 |
 
 재현성을 높인 요소:
 
@@ -340,7 +350,7 @@ streamlit run app.py
 | 역량 | 프로젝트에서 드러나는 부분 |
 |---|---|
 | 데이터 파이프라인 설계 | 수집 → raw → 전처리 → processed → 로딩 → 지표 → 차트 흐름 구성 |
-| Python 모듈화 | `src/` 기반 역할 분리(8개 모듈), 순수 함수와 I/O 분리 |
+| Python 모듈화 | 12개 `src` 모듈과 `app.py`, `run_pipeline.py` 진입점, 순수 함수와 I/O 분리 |
 | 대시보드 구현 | Streamlit + Plotly 기반 인터랙티브 UI |
 | 재현성 관리 | 버전 고정 `requirements.txt`, 샘플 데이터, 실행 명령 정리 |
 | 보안 의식 | `.env` 기반 키 관리, 로그 키 마스킹, `.gitignore` 정책 |
@@ -353,7 +363,7 @@ streamlit run app.py
 
 ## 14. 남은 개선 과제
 
-- [ ] 대시보드 3탭 스크린샷 추가
+- [x] 대시보드 3탭 스크린샷 추가 — 현황 분석, 업종별 분기 추이, 점포 밀도 지도 화면을 README에 반영
 - [x] GitHub Actions CI (ruff + pytest, 3.11/3.12)
 - [x] 2025년 1분기~4분기 분기 추이 시각화 (2단 패널)
 - [x] pydeck 점포 밀도 지도 (색상·크기 그라데이션)
@@ -379,9 +389,8 @@ streamlit run app.py
 
 ## 16. 다음 액션
 
-1. 대시보드 3탭 스크린샷 촬영·README 삽입
-2. 2026년 분기 데이터 수집 시 `TARGET_QUARTER` 스케줄링 검토
-3. Obsidian Vault와 이 보고서 동기화
+1. 2026년 분기 데이터 수집 시 `TARGET_QUARTER` 스케줄링 검토
+2. Obsidian Vault와 이 보고서 동기화
 
 ---
 
