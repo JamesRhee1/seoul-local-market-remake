@@ -1,3 +1,5 @@
+import logging
+
 import pandas as pd
 
 from src import config
@@ -80,3 +82,14 @@ def test_multi_quarter_uses_latest_only():
 
     single = build_insights_markdown(_df())
     assert strip(md) == strip(single)
+
+
+def test_warns_when_insight_quarter_outside_demo_quarters(caplog):
+    """DEMO_QUARTERS 밖 분기가 최신이면 경고만 출력하고 인사이트는 생성한다."""
+    df = _df().assign(**{C.QUARTER: 20261})
+
+    with caplog.at_level(logging.WARNING, logger="src.report"):
+        md = build_insights_markdown(df)
+
+    assert "`2026-1분기`" in md
+    assert any("DEMO_QUARTERS" in r.message and "다릅니다" in r.message for r in caplog.records)

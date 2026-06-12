@@ -81,9 +81,24 @@ def _latest_quarter_only(df: pd.DataFrame) -> tuple[pd.DataFrame, str]:
     return filtered, latest
 
 
+def _warn_if_insight_quarter_outside_demo(latest_quarter: str) -> None:
+    """인사이트 기준 분기가 문서 안내(DEMO_QUARTERS)와 다르면 경고만 남긴다."""
+    if latest_quarter in ("N/A", ""):
+        return
+    if latest_quarter not in config.DEMO_QUARTERS:
+        demo = ", ".join(config.DEMO_QUARTERS)
+        logger.warning(
+            "문서 안내 분기(DEMO_QUARTERS)와 인사이트 기준 분기가 다릅니다: "
+            "인사이트=%s, DEMO_QUARTERS=[%s]",
+            format_quarter_label(latest_quarter),
+            demo,
+        )
+
+
 def build_insights_markdown(df: pd.DataFrame) -> str:
     """데이터프레임에서 인사이트 마크다운 본문을 생성한다 (순수 함수)."""
     df, q_label = _latest_quarter_only(df)
+    _warn_if_insight_quarter_outside_demo(q_label)
     stats = _industry_stats(df)
     growth = stats.sort_values("net", ascending=False).head(3)
     decline = stats.sort_values("net").head(3)

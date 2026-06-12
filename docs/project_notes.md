@@ -56,7 +56,7 @@ tags:
 - **무엇**: 서울시 상권(점포·위치) 데이터를 수집·전처리·분석하고 Streamlit 대시보드로 시각화하는 데이터 프로젝트.
 - **데이터 출처**: [서울 열린데이터 광장](https://data.seoul.go.kr/) 상권 API (점포 `VwsmTrdarStorQq`, 상권 영역 `TbgisTrdarRelm`).
 - **기술 스택**: Python, pandas, Streamlit, Plotly, pydeck, pyarrow, pyproj, requests, python-dotenv, pytest, ruff.
-- **분석 기준 분기**: 2025년 1~4분기 (`20251`~`20254`, UI 표기 `2025-4분기`).
+- **분석 기준 분기**: 2025년 1~4분기 (`20251`~`20254`, UI·인사이트 최신 **2025-4분기**).
 - **실행 특성**:
   - 서울시 열린데이터 광장 API로 신규 데이터를 수집할 수 있다(키 필요).
   - 키나 대용량 데이터가 없어도 저장소에 포함된 **샘플 데이터로 데모 실행**이 가능하다.
@@ -231,7 +231,7 @@ flowchart TD
 
 1. **API 수집**: `collector`가 `TARGET_QUARTER`(예: `20254`)별로 점포·위치 데이터를 페이지네이션 수집한다.
 2. **raw 저장**: `storage.write_table`로 `data/raw/*.parquet`에 저장한다.
-3. **processed 생성**: `preprocessor.run`이 병합·좌표(`geo.py`)·분기 스냅샷(`seoul_market_{분기}.parquet`)을 생성하고 합본 `seoul_market_final.parquet`를 만든다.
+3. **processed 생성**: `preprocessor.run`이 병합·좌표(`geo.py`)·분기 스냅샷(`seoul_market_{분기}.parquet`)을 생성하고 합본 `seoul_market_final.parquet`를 만든다. 문서 기준은 2025년 1~4분기이며, `DEMO_QUARTERS` 밖 스냅샷이 섞이면 `report.py`가 경고를 남긴다.
 4. **sample 생성**: `python -m src.sample_data`로 processed에서 2025 4분기 소형 샘플을 `data/sample/`에 복제한다.
 5. **sample fallback**: processed가 없으면 `data/sample` 분기 스냅샷으로 분기 추이·지도까지 데모 가능.
 6. **대시보드**: `app.py` 3탭 — 현황(KPI·막대), 분기 추이(2단 패널), 점포 밀도 지도(색상 그라데이션).
@@ -327,7 +327,7 @@ streamlit run app.py
 | `test_storage.py` | Parquet/CSV 폴백, 5자리 분기 코드만 스냅샷 인정 |
 | `test_pipeline_integration.py` | `preprocessor.run()` 2회 연속 멱등성 |
 | `test_utils.py` | API 오류 처리, 페이지네이션 |
-| `test_report.py` | 인사이트 생성, 최신 분기만 사용 |
+| `test_report.py` | 인사이트 생성, 최신 분기만 사용, DEMO_QUARTERS 불일치 경고 |
 | `test_sample_data.py` | sample 분기 스냅샷 생성 |
 | `test_geo.py` | TM→WGS84 변환 (EPSG:5181, 강남역 ±0.001°) |
 
