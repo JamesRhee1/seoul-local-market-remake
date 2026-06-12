@@ -168,7 +168,7 @@ seoul-local-market-remake/
 
 ![서울시 상권 분석 대시보드 — 데이터 파이프라인](architecture.png)
 
-- **현행** (`architecture.png`, `architecture.svg`): v3 — 5계층 파이프라인, `run_pipeline.py` 오케스트레이션, `geo.py`, sample 폴백, Streamlit 3탭, pytest·ruff·CI·Parquet 푸터. `python docs/gen_infographic.py` 로 재생성 가능.
+- **현행** (`architecture.png` 1920×1080, `architecture.svg`): v3 — 5계층 파이프라인, `run_pipeline.py` 오케스트레이션, `geo.py`, sample 폴백, Streamlit 3탭, pytest·ruff·CI·Parquet 푸터. SVG는 `python docs/gen_infographic.py` 로 재생성 가능.
 - **구버전** (`docs/archive/`): v1 초기 단선형, v2 오케스트레이터 도입판 (참고용 보관)
 
 폴더별 역할:
