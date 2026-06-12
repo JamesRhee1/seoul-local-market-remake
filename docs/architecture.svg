@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+<rect width="1920" height="1080" fill="#FAFAFA"/>
+<defs>
+<marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+<path d="M0,0 L8,3 L0,6 Z" fill="#333"/>
+</marker>
+</defs>
+<text x="960" y="48" font-family="Arial, sans-serif" font-size="28" fill="#1a1a1a" text-anchor="middle" font-weight="bold">
+<tspan x="960" dy="0">서울시 상권 분석 대시보드 — 데이터 파이프라인</tspan>
+</text>
+<rect x="40" y="100" width="320" height="820" rx="12" fill="#E8F0FE" stroke="#4285F4" stroke-width="2"/>
+<text x="200" y="136" font-family="Arial, sans-serif" font-size="20" fill="#1a1a1a" text-anchor="middle" font-weight="bold">
+<tspan x="200" dy="0">외부</tspan>
+</text>
+<rect x="64" y="180" width="272" height="52" rx="8" fill="#ffffff" stroke="#4285F4" stroke-width="2"/>
+<text x="200" y="212" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="200" dy="0">서울 API</tspan>
+</text>
+<rect x="64" y="248" width="272" height="52" rx="8" fill="#ffffff" stroke="#4285F4" stroke-width="2"/>
+<text x="200" y="280" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="200" dy="0">.env</tspan>
+</text>
+<rect x="64" y="316" width="272" height="52" rx="8" fill="#ffffff" stroke="#4285F4" stroke-width="2"/>
+<text x="200" y="348" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="200" dy="0">사용자</tspan>
+</text>
+<rect x="400" y="100" width="320" height="820" rx="12" fill="#E6F4EA" stroke="#34A853" stroke-width="2"/>
+<text x="560" y="136" font-family="Arial, sans-serif" font-size="20" fill="#1a1a1a" text-anchor="middle" font-weight="bold">
+<tspan x="560" dy="0">ETL</tspan>
+</text>
+<rect x="424" y="180" width="272" height="52" rx="8" fill="#ffffff" stroke="#34A853" stroke-width="2"/>
+<text x="560" y="212" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="560" dy="0">run_pipeline</tspan>
+</text>
+<rect x="424" y="248" width="272" height="52" rx="8" fill="#ffffff" stroke="#34A853" stroke-width="2"/>
+<text x="560" y="280" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="560" dy="0">collector</tspan>
+</text>
+<rect x="424" y="316" width="272" height="52" rx="8" fill="#ffffff" stroke="#34A853" stroke-width="2"/>
+<text x="560" y="348" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="560" dy="0">preprocessor</tspan>
+</text>
+<rect x="424" y="384" width="272" height="52" rx="8" fill="#ffffff" stroke="#34A853" stroke-width="2"/>
+<text x="560" y="416" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="560" dy="0">geo</tspan>
+</text>
+<rect x="760" y="100" width="320" height="820" rx="12" fill="#FEF7E0" stroke="#FBBC04" stroke-width="2"/>
+<text x="920" y="136" font-family="Arial, sans-serif" font-size="20" fill="#1a1a1a" text-anchor="middle" font-weight="bold">
+<tspan x="920" dy="0">저장소</tspan>
+</text>
+<rect x="784" y="180" width="272" height="52" rx="8" fill="#ffffff" stroke="#FBBC04" stroke-width="2"/>
+<text x="920" y="212" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="920" dy="0">storage.py</tspan>
+</text>
+<rect x="784" y="248" width="272" height="52" rx="8" fill="#ffffff" stroke="#FBBC04" stroke-width="2"/>
+<text x="920" y="280" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="920" dy="0">raw</tspan>
+</text>
+<rect x="784" y="316" width="272" height="52" rx="8" fill="#ffffff" stroke="#FBBC04" stroke-width="2"/>
+<text x="920" y="348" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="920" dy="0">processed</tspan>
+</text>
+<rect x="784" y="384" width="272" height="52" rx="8" fill="#ffffff" stroke="#FBBC04" stroke-width="2"/>
+<text x="920" y="416" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="920" dy="0">sample</tspan>
+</text>
+<rect x="1120" y="100" width="320" height="820" rx="12" fill="#E0F7FA" stroke="#00ACC1" stroke-width="2"/>
+<text x="1280" y="136" font-family="Arial, sans-serif" font-size="20" fill="#1a1a1a" text-anchor="middle" font-weight="bold">
+<tspan x="1280" dy="0">분석</tspan>
+</text>
+<rect x="1144" y="180" width="272" height="52" rx="8" fill="#ffffff" stroke="#00ACC1" stroke-width="2"/>
+<text x="1280" y="212" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="1280" dy="0">data_loader</tspan>
+</text>
+<rect x="1144" y="248" width="272" height="52" rx="8" fill="#ffffff" stroke="#00ACC1" stroke-width="2"/>
+<text x="1280" y="280" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="1280" dy="0">metrics</tspan>
+</text>
+<rect x="1144" y="316" width="272" height="52" rx="8" fill="#ffffff" stroke="#00ACC1" stroke-width="2"/>
+<text x="1280" y="348" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="1280" dy="0">charts</tspan>
+</text>
+<rect x="1144" y="384" width="272" height="52" rx="8" fill="#ffffff" stroke="#00ACC1" stroke-width="2"/>
+<text x="1280" y="416" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="1280" dy="0">maps</tspan>
+</text>
+<rect x="1144" y="452" width="272" height="52" rx="8" fill="#ffffff" stroke="#00ACC1" stroke-width="2"/>
+<text x="1280" y="484" font-family="Arial, sans-serif" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="1280" dy="0">report</tspan>
+</text>
+<rect x="1480" y="100" width="320" height="820" rx="12" fill="#212121" stroke="#000000" stroke-width="2"/>
+<text x="1640" y="136" font-family="Arial, sans-serif" font-size="20" fill="#ffffff" text-anchor="middle" font-weight="bold">
+<tspan x="1640" dy="0">대시보드</tspan>
+</text>
+<rect x="1504" y="180" width="272" height="52" rx="8" fill="#333333" stroke="#000000" stroke-width="2"/>
+<text x="1640" y="212" font-family="Arial, sans-serif" font-size="15" fill="#ffffff" text-anchor="middle" font-weight="normal">
+<tspan x="1640" dy="0">app.py</tspan>
+</text>
+<rect x="1504" y="248" width="272" height="52" rx="8" fill="#333333" stroke="#000000" stroke-width="2"/>
+<text x="1640" y="280" font-family="Arial, sans-serif" font-size="15" fill="#ffffff" text-anchor="middle" font-weight="normal">
+<tspan x="1640" dy="0">3탭: 현황/추이/지도</tspan>
+</text>
+<line x1="360" y1="510" x2="400" y2="510" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="720" y1="510" x2="760" y2="510" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="1080" y1="510" x2="1120" y2="510" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="1440" y1="510" x2="1480" y2="510" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="560" y1="220" x2="200" y2="300" stroke="#666666" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="8,6"/>
+<text x="380" y="200" font-family="Arial, sans-serif" font-size="13" fill="#666666" text-anchor="middle" font-weight="normal">
+<tspan x="380" dy="0">제어</tspan>
+</text>
+<rect x="360" y="980" width="120" height="40" rx="8" fill="#ffffff" stroke="#cccccc" stroke-width="2"/>
+<text x="420" y="1006" font-family="Arial, sans-serif" font-size="14" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="420" dy="0">pytest</tspan>
+</text>
+<rect x="660" y="980" width="120" height="40" rx="8" fill="#ffffff" stroke="#cccccc" stroke-width="2"/>
+<text x="720" y="1006" font-family="Arial, sans-serif" font-size="14" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="720" dy="0">ruff</tspan>
+</text>
+<rect x="900" y="980" width="120" height="40" rx="8" fill="#ffffff" stroke="#cccccc" stroke-width="2"/>
+<text x="960" y="1006" font-family="Arial, sans-serif" font-size="14" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="960" dy="0">CI</tspan>
+</text>
+<rect x="1140" y="980" width="120" height="40" rx="8" fill="#ffffff" stroke="#cccccc" stroke-width="2"/>
+<text x="1200" y="1006" font-family="Arial, sans-serif" font-size="14" fill="#1a1a1a" text-anchor="middle" font-weight="normal">
+<tspan x="1200" dy="0">Parquet</tspan>
+</text>
+<text x="960" y="1040" font-family="Arial, sans-serif" font-size="14" fill="#666666" text-anchor="middle" font-weight="normal">
+<tspan x="960" dy="0">다이어그램은 docs/gen_infographic.py 로 재생성 가능</tspan>
+</text>
+</svg>

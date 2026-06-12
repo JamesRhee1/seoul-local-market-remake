@@ -227,7 +227,8 @@ DB 없이 Parquet(레거시 CSV 폴백) 파일을 사용하며, `src/` 패키지
 
 인포그래픽은 프로젝트 전체 구조를 5개 계층(외부 → ETL → 저장소 → 분석 → 대시보드)으로 정리한 것입니다.
 `run_pipeline.py` 오케스트레이션(점선), `geo.py` 좌표 변환, `sample` 폴백, Streamlit 3탭(현황/추이/지도)이 반영되어 있습니다.
-이전 단선형 버전은 [`docs/architecture_legacy.png`](docs/architecture_legacy.png) 에 보관합니다.
+다이어그램은 [`docs/gen_infographic.py`](docs/gen_infographic.py)로 재생성할 수 있으며, 벡터 원본은 [`docs/architecture.svg`](docs/architecture.svg)입니다.
+이전 버전은 [`docs/archive/`](docs/archive/)에 보관합니다 (v1: 초기 단선형, v2: 오케스트레이터 도입판).
 
 | 계층 | 색상 | 구성 요소 | 역할 |
 |---|---|---|---|
@@ -349,8 +350,10 @@ seoul-local-market-remake/
 │   ├── test_report.py
 │   └── test_pipeline_integration.py  # 전처리 멱등성 통합 검증
 └── docs/
-    ├── architecture.png        # 시스템 아키텍처 인포그래픽 (현행)
-    ├── architecture_legacy.png # 구버전 인포그래픽 (단선형 파이프라인)
+    ├── architecture.png        # 시스템 아키텍처 인포그래픽 (현행 v3, 1920×1080)
+    ├── architecture.svg        # 벡터 원본
+    ├── gen_infographic.py      # SVG/PNG 재생성 스크립트
+    ├── archive/                # 구버전 (v1·v2)
     └── project_notes.md
 ```
 

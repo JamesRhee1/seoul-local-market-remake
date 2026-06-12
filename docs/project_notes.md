@@ -157,8 +157,10 @@ seoul-local-market-remake/
 │   └── report.py           # README AUTO-INSIGHTS
 ├── tests/                  # 52개
 └── docs/
-    ├── architecture.png        # 현행 인포그래픽 (오케스트레이터·3탭·지도)
-    ├── architecture_legacy.png # 구버전 (단선형 파이프라인)
+    ├── architecture.png        # 현행 인포그래픽 v3 (1920×1080)
+    ├── architecture.svg        # 벡터 원본
+    ├── gen_infographic.py      # SVG/PNG 재생성
+    ├── archive/                # 구버전 v1·v2
     └── project_notes.md
 ```
 
@@ -166,8 +168,8 @@ seoul-local-market-remake/
 
 ![서울시 상권 분석 대시보드 — 데이터 파이프라인](architecture.png)
 
-- **현행** (`architecture.png`): `run_pipeline.py` 오케스트레이션, `geo.py` 좌표 변환, 분기 Parquet 저장소, sample 폴백, Streamlit 3탭(현황/추이/지도), pytest·ruff·CI·Parquet 푸터 반영
-- **구버전** (`architecture_legacy.png`): 단선형 A→B→…→I 흐름 인포그래픽 (참고용 보관)
+- **현행** (`architecture.png`, `architecture.svg`): v3 — 5계층 파이프라인, `run_pipeline.py` 오케스트레이션, `geo.py`, sample 폴백, Streamlit 3탭, pytest·ruff·CI·Parquet 푸터. `python docs/gen_infographic.py` 로 재생성 가능.
+- **구버전** (`docs/archive/`): v1 초기 단선형, v2 오케스트레이터 도입판 (참고용 보관)
 
 폴더별 역할:
 
@@ -358,7 +360,7 @@ streamlit run app.py
 - [x] Parquet 저장 + CSV 폴백
 - [x] Streamlit Cloud 배포 가이드 (README)
 - [x] 분기별 sample Parquet (`src/sample_data.py`)
-- [x] `docs/architecture.png` 갱신 (Parquet·3탭·지도·오케스트레이터 반영, 구버전 `architecture_legacy.png` 보관)
+- [x] `docs/architecture.png` 갱신 v3 (SVG·gen_infographic.py 포함, 구버전 `docs/archive/` v1·v2 보관)
 - [ ] 데이터 수집 스케줄링 (2026년 이후 분기 자동 스냅샷)
 - [ ] 자치구 choropleth 지도 (GeoJSON)
 - [ ] Cloud 배포 시 processed 외부 스토리지 연동
