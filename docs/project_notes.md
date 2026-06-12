@@ -120,7 +120,7 @@ tags:
 | 전처리 | 스크립트/함수 결합 | 순수 함수(`clean_numeric`/`build_dimension`/`merge_market_data`)와 I/O(`run`) 분리 | 재사용성·테스트 용이성 |
 | 시각화 | 앱 내부 로직 중심 | `charts`/`maps` 분리, 3탭(현황·추이·지도) | UI와 시각화 로직 분리 |
 | 지표 계산 | 앱 내부 집계 | `metrics` 순수 함수(KPI/집계/옵션) | 단위 테스트 가능 |
-| 테스트 | 부족하거나 없음 | `pytest` 52개 + GitHub Actions CI (ruff, 3.11/3.12) | 회귀 검증 자동화 |
+| 테스트 | 부족하거나 없음 | `pytest` 스위트 + GitHub Actions CI (ruff, 3.11/3.12) | 회귀 검증 자동화 |
 | 저장 포맷 | CSV 중심 | Parquet 저장 + CSV 폴백(`storage.py`) | I/O 효율·호환 |
 | 데이터 거버넌스 | 대용량 CSV 추적 가능성 | raw/processed Git 제외, sample Parquet(4분기) 포함 | 저장소 경량화 |
 | 문서화 | 기능 설명 중심 | README(사용법) + 보고서(분석) 분리 | 전달력 향상 |
@@ -155,7 +155,7 @@ seoul-local-market-remake/
 │   ├── maps.py             # pydeck 밀도 지도
 │   ├── sample_data.py      # processed→sample 생성
 │   └── report.py           # README AUTO-INSIGHTS
-├── tests/                  # 52개
+├── tests/                  # pytest 스위트 (CI: ruff + pytest)
 └── docs/
     ├── architecture.png        # 현행 인포그래픽 v3 (1920×1080)
     ├── architecture.svg        # 벡터 원본
@@ -300,7 +300,7 @@ streamlit run app.py
 
 | 명령 | 상태 |
 |---|---|
-| `pytest` | **52개** 전체 통과 |
+| `pytest` | 전체 통과 |
 | `ruff check .` | 통과 |
 | GitHub Actions | push/PR 시 Python 3.11/3.12 matrix |
 | `streamlit run app.py` | sample 4분기 Parquet로 3탭 데모 가능 |
@@ -344,7 +344,7 @@ streamlit run app.py
 | 대시보드 구현 | Streamlit + Plotly 기반 인터랙티브 UI |
 | 재현성 관리 | 버전 고정 `requirements.txt`, 샘플 데이터, 실행 명령 정리 |
 | 보안 의식 | `.env` 기반 키 관리, 로그 키 마스킹, `.gitignore` 정책 |
-| 테스트 습관 | `pytest` 52개 + CI로 핵심 로직·멱등성 회귀 검증 |
+| 테스트 습관 | `pytest` 스위트 + CI로 핵심 로직·멱등성 회귀 검증 |
 | 문서화 | README(사용법)와 분석 보고서(이 문서) 역할 분리 |
 
 핵심 메시지는 "데이터 분석 프로젝트도 소프트웨어 엔지니어링 관점에서 구조화·테스트·문서화될 수 있다"는 점을 보여주는 것이다.

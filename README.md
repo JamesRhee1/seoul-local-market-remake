@@ -337,7 +337,7 @@ seoul-local-market-remake/
 │   ├── sample_data.py      # processed → sample 분기 스냅샷
 │   └── report.py           # 리포트/인사이트 생성
 ├── run_pipeline.py         # 수집→전처리→리포트 오케스트레이터
-├── tests/                  # pytest 52개 (CI: ruff + pytest)
+├── tests/                  # pytest 스위트 (CI: ruff + pytest)
 │   ├── test_metrics.py
 │   ├── test_preprocessor.py
 │   ├── test_charts.py
