@@ -89,8 +89,16 @@ def main() -> None:
         kpi = metrics.compute_kpi(filtered)
         c1, c2, c3 = st.columns(3)
         c1.metric("총 점포 수", f"{kpi.total_stores:,}개")
-        c2.metric("신규 개업", f"{kpi.total_open:,}개", delta=kpi.total_open)
-        c3.metric("폐업", f"{kpi.total_close:,}개", delta=-kpi.total_close, delta_color="inverse")
+        c2.metric(
+            "신규 개업",
+            f"{kpi.total_open:,}개",
+            delta=kpi.total_open if kpi.total_open else None,
+        )
+        c3.metric(
+            "폐업",
+            f"{kpi.total_close:,}개",
+            delta=-kpi.total_close if kpi.total_close else None,
+        )
 
         st.divider()
 
