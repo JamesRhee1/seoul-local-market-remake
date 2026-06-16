@@ -45,7 +45,8 @@ pkill -f "[s]treamlit run app.py" 2>/dev/null || true
 sleep 1
 
 echo "==> Streamlit 시작 (0.0.0.0:8501)"
-nohup streamlit run app.py > streamlit.log 2>&1 &
+# config.toml 이 1004 로 남아 있어도 CLI 가 우선 (1004는 root 권한 필요)
+nohup streamlit run app.py --server.address 0.0.0.0 --server.port 8501 > streamlit.log 2>&1 &
 sleep 3
 
 echo "==> listen 확인"
