@@ -1,0 +1,10 @@
+# bigsoft 자체 서버 배포 — 외부 1004 ↔ 내부 1004 (1:1)
+[server]
+headless = true
+address = "0.0.0.0"
+port = 1004
+enableCORS = false
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false

@@ -1,0 +1,16 @@
+[Unit]
+Description=Seoul Local Market Streamlit Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hsri20
+WorkingDirectory=/home/hsri20/seoul-local-market-remake
+Environment=PATH=/home/hsri20/seoul-local-market-remake/.venv/bin
+ExecStart=/home/hsri20/seoul-local-market-remake/.venv/bin/streamlit run app.py --server.address 0.0.0.0 --server.port 1004
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
