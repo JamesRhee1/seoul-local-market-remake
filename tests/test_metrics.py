@@ -7,11 +7,15 @@ from src.metrics import (
     aggregate_industry_by_quarter,
     compute_kpi,
     district_options,
+    filter_by_quarter,
     filter_data,
     filter_latest_quarter,
     format_quarter_label,
+    format_quarter_short_label,
     industry_options,
     quarter_options,
+    quarter_year,
+    sort_by_quarter,
 )
 
 COLS = config.COLS
@@ -82,6 +86,15 @@ def test_format_quarter_label():
     assert format_quarter_label("20251") == "2025-1분기"
 
 
+def test_format_quarter_short_label():
+    assert format_quarter_short_label("20254") == "4분기"
+    assert format_quarter_short_label("20251") == "1분기"
+
+
+def test_quarter_year():
+    assert quarter_year("20254") == "2025"
+
+
 def test_quarter_options_sorted():
     assert quarter_options(_quarter_df()) == ["20253", "20254"]
 
@@ -90,6 +103,29 @@ def test_filter_latest_quarter_keeps_newest():
     out = filter_latest_quarter(_quarter_df())
     assert set(out[COLS.QUARTER].astype(str)) == {"20254"}
     assert len(out) == 2
+
+
+def test_filter_by_quarter_keeps_matching():
+    out = filter_by_quarter(_quarter_df(), "20253")
+    assert len(out) == 2
+    assert set(out[COLS.QUARTER].astype(str)) == {"20253"}
+
+
+def test_filter_by_quarter_empty_for_missing():
+    out = filter_by_quarter(_quarter_df(), "20251")
+    assert out.empty
+
+
+def test_filter_by_quarter_no_quarter_column_returns_original():
+    df = _df()
+    out = filter_by_quarter(df, "20251")
+    assert len(out) == len(df)
+
+
+def test_sort_by_quarter_orders_ascending():
+    shuffled = _quarter_df().sample(frac=1, random_state=0)
+    out = sort_by_quarter(shuffled)
+    assert out[COLS.QUARTER].astype(str).tolist() == ["20253", "20253", "20254", "20254"]
 
 
 def test_aggregate_for_map_sums_by_trdar():

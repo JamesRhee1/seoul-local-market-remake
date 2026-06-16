@@ -1,10 +1,9 @@
-# bigsoft 배포: 앱은 내부 8501, iptime 포트포워드 외부 1004 → 8501
 [server]
 headless = true
 address = "0.0.0.0"
-port = 8501
+port = 18080
 enableCORS = false
-enableXsrfProtection = true
+enableXsrfProtection = false
 
 [browser]
 gatherUsageStats = false

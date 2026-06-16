@@ -6,9 +6,9 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=hsri20
-WorkingDirectory=/home/hsri20/seoul-local-market-remake
-Environment=PATH=/home/hsri20/seoul-local-market-remake/.venv/bin
-ExecStart=/home/hsri20/seoul-local-market-remake/.venv/bin/streamlit run app.py --server.address 0.0.0.0 --server.port 8501
+WorkingDirectory=/home/hsri20/projects/data-analysis/seoul-local-market-remake
+Environment=PATH=/home/hsri20/projects/data-analysis/seoul-local-market-remake/.venv/bin
+ExecStart=/home/hsri20/projects/data-analysis/seoul-local-market-remake/.venv/bin/streamlit run app.py --server.address 0.0.0.0 --server.port 18080
 Restart=on-failure
 RestartSec=5
 

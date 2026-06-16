@@ -19,6 +19,22 @@ def format_quarter_label(quarter: str) -> str:
     return code
 
 
+def format_quarter_short_label(quarter: str) -> str:
+    """분기 코드(예: 20254)를 짧은 라벨(예: 4분기)로 변환한다."""
+    code = str(quarter)
+    if len(code) >= 5 and code[:4].isdigit() and code[4].isdigit():
+        return f"{code[4]}분기"
+    return code
+
+
+def quarter_year(quarter: str) -> str:
+    """분기 코드에서 연도(예: 2025)를 추출한다."""
+    code = str(quarter)
+    if len(code) >= 4 and code[:4].isdigit():
+        return code[:4]
+    return code
+
+
 @dataclass(frozen=True)
 class Kpi:
     total_stores: int
@@ -90,7 +106,26 @@ def filter_latest_quarter(df: pd.DataFrame) -> pd.DataFrame:
     if not quarters:
         return df
     latest = quarters[-1]
-    return df[df[COLS.QUARTER].astype(str) == latest].copy()
+    return filter_by_quarter(df, latest)
+
+
+def filter_by_quarter(df: pd.DataFrame, quarter: str) -> pd.DataFrame:
+    """주어진 분기 코드와 일치하는 행만 반환한다 (순수 함수)."""
+    if COLS.QUARTER not in df.columns:
+        return df
+    return df[df[COLS.QUARTER].astype(str) == str(quarter)].copy()
+
+
+def sort_by_quarter(df: pd.DataFrame) -> pd.DataFrame:
+    """분기 코드(20251, 20252, …) 오름차순으로 행을 정렬한다 (순수 함수)."""
+    if df.empty or COLS.QUARTER not in df.columns:
+        return df
+    return (
+        df.assign(_quarter_sort=df[COLS.QUARTER].astype(str))
+        .sort_values("_quarter_sort")
+        .drop(columns="_quarter_sort")
+        .reset_index(drop=True)
+    )
 
 
 def aggregate_for_map(
@@ -141,5 +176,5 @@ def aggregate_industry_by_quarter(
         ]
         .sum()
         .reset_index()
-        .sort_values(COLS.QUARTER)
+        .pipe(sort_by_quarter)
     )

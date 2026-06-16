@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from . import config
-from .metrics import format_quarter_label
+from .metrics import format_quarter_short_label, sort_by_quarter
 
 COLS = config.COLS
 
@@ -48,8 +48,9 @@ def industry_trend_line(trend_df: pd.DataFrame, title: str = "") -> go.Figure:
     """분기별 추이 차트 (총 점포 / 개업·폐업 분리 패널)."""
     from plotly.subplots import make_subplots
 
-    df = trend_df.copy()
-    df["_분기라벨"] = df[COLS.QUARTER].astype(str).map(format_quarter_label)
+    df = sort_by_quarter(trend_df.copy())
+    df["_분기라벨"] = df[COLS.QUARTER].astype(str).map(format_quarter_short_label)
+    quarter_labels = df["_분기라벨"].tolist()
 
     fig = make_subplots(
         rows=2,
@@ -101,7 +102,9 @@ def industry_trend_line(trend_df: pd.DataFrame, title: str = "") -> go.Figure:
         plot_bgcolor="rgba(0,0,0,0)",
         height=520,
     )
+    xaxis_kw = dict(title_text="분기", categoryorder="array", categoryarray=quarter_labels)
     fig.update_yaxes(title_text="점포 수", row=1, col=1)
     fig.update_yaxes(title_text="점포 수", row=2, col=1)
-    fig.update_xaxes(title_text="분기", row=2, col=1)
+    fig.update_xaxes(**xaxis_kw, row=1, col=1)
+    fig.update_xaxes(**xaxis_kw, row=2, col=1)
     return fig
