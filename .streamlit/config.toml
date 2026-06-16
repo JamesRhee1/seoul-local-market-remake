@@ -1,8 +1,8 @@
-# bigsoft 자체 서버 배포 — 외부 1004 ↔ 내부 1004 (1:1)
+# bigsoft 배포: 앱은 내부 8501, iptime 포트포워드 외부 1004 → 8501
 [server]
 headless = true
 address = "0.0.0.0"
-port = 1004
+port = 8501
 enableCORS = false
 enableXsrfProtection = true
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bigsoft 서버에서 Streamlit을 0.0.0.0:1004 로 기동 (SSH 세션에서 실행)
+# bigsoft: Streamlit 0.0.0.0:8501 기동 → iptime 외부 1004 포워딩
 set -euo pipefail
 
 if [[ -d /mnt/data/hsri20/seoul-local-market-remake ]]; then
@@ -28,35 +28,39 @@ else
 fi
 
 mkdir -p .streamlit
-if [[ ! -f .streamlit/config.toml ]] || ! grep -q 'port = 1004' .streamlit/config.toml 2>/dev/null; then
-  cat > .streamlit/config.toml << 'EOF'
+cat > .streamlit/config.toml << 'EOF'
 [server]
 headless = true
 address = "0.0.0.0"
-port = 1004
+port = 8501
 enableCORS = false
 enableXsrfProtection = true
 
 [browser]
 gatherUsageStats = false
 EOF
-fi
 
 echo "==> 기존 streamlit 프로세스 종료"
 pkill -f "[s]treamlit run app.py" 2>/dev/null || true
 sleep 1
 
-echo "==> Streamlit 시작 (0.0.0.0:1004)"
+echo "==> Streamlit 시작 (0.0.0.0:8501)"
 nohup streamlit run app.py > streamlit.log 2>&1 &
 sleep 3
 
 echo "==> listen 확인"
-ss -tlnp | grep 1004 || { echo "FAIL: 1004 포트가 listen 하지 않습니다. streamlit.log:"; tail -20 streamlit.log; exit 1; }
+if ! ss -tlnp | grep 8501; then
+  echo "FAIL: 8501 포트 listen 실패. streamlit.log:"
+  tail -30 streamlit.log
+  exit 1
+fi
 
-CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:1004/ || echo "000")
-echo "==> curl 127.0.0.1:1004 → HTTP $CODE"
+CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8501/ || echo "000")
+echo "==> curl 127.0.0.1:8501 → HTTP $CODE"
 echo ""
-echo "다음: iptime에서"
-echo "  1) 원격관리 포트 1004 → 8443 등으로 변경 (또는 끄기)"
-echo "  2) 포트포워드: 외부 1004 → 192.168.0.51:1004 (TCP)"
-echo "  3) 브라우저: http://bigsoft.iptime.org:1004/"
+echo "iptime 설정 (필수):"
+echo "  1) 원격관리 포트 1004 → 8443 으로 변경 (또는 끄기)"
+echo "  2) 포트포워드: 외부 1004 → 192.168.0.51:8501 (TCP)"
+echo "  3) 접속: http://bigsoft.iptime.org:1004/"
+echo ""
+echo "LAN 테스트: http://192.168.0.51:8501"
