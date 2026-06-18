@@ -35,3 +35,22 @@ def test_store_density_deck_uses_per_point_color():
     assert "color" in str(deck.layers[0].get_fill_color)
     colors = df[COLS.STORE_CO].apply(lambda v: density_color(v, 5, 80))
     assert colors.iloc[0] != colors.iloc[-1]
+
+
+def test_store_density_deck_zooms_to_seoul_bounds():
+    """서울 전역 좌표 범위에서 초기 zoom이 과도하게 넓지 않아야 한다."""
+    df = pd.DataFrame(
+        {
+            COLS.TRDAR_CD: ["1", "2"],
+            COLS.TRDAR_CD_NM: ["A", "B"],
+            COLS.DISTRICT: ["강남구", "마포구"],
+            COLS.LAT: [37.43, 37.69],
+            COLS.LON: [126.80, 127.17],
+            COLS.STORE_CO: [10, 20],
+        }
+    )
+    deck = store_density_deck(df)
+    vs = deck.initial_view_state
+    assert 37.5 < vs.latitude < 37.6
+    assert 126.9 < vs.longitude < 127.0
+    assert vs.zoom >= 11.0

@@ -264,6 +264,7 @@ def main() -> None:
         "자치구 (미선택 시 전체)",
         metrics.district_options(df),
         default=[],
+        placeholder="자치구 선택",
         key="filter_districts",
     )
 
