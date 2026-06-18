@@ -248,7 +248,7 @@ flowchart TD
 6. **대시보드**: `app.py` 3탭 — 현황(KPI·막대), 분기 추이(2단 패널), 점포 밀도 지도(색상 그라데이션).
 
 > [!NOTE]
-> **오케스트레이션** — `run_pipeline.py`가 수집→전처리→`report.update_readme` 순으로 실행한다. `preprocessor`는 report에 의존하지 않는다.
+> **오케스트레이션** — `run_pipeline.py`가 `.env` 의 `TARGET_QUARTER`(쉼표 구분, 예: `20251,20252,20253,20254`) 목록을 순회하며 **분기별** 수집→전처리 후, 마지막에 `report.update_readme` 를 한 번 실행한다. `TARGET_QUARTER` 가 비어 있으면 20251~20254 를 기본 사용한다. `preprocessor`는 report에 의존하지 않는다.
 
 ---
 
@@ -280,15 +280,28 @@ flowchart TD
 
 대시보드는 `app.py`가 UI 조립만 담당하고, 계산·시각화는 `metrics`/`charts`/`maps`로 위임하는 구조다.
 
-| 탭 | 내용 |
+| 화면 | 내용 |
 |---|---|
-| 현황 분석 | 최신 분기(`2025-4분기` 라벨) KPI, 자치구별 개업/폐업 막대 차트 |
-| 업종별 분기 추이 | 2단 패널(총 점포 / 개업·폐업), 2025년 1~4분기 라인 차트 |
+| 현황 분석 | 기준 분기 KPI, 자치구별 개업/폐업 막대 차트 |
+| 업종별 분기 추이 | 2단 패널(총 점포 / 개업·폐업), 분기 라인 차트 |
 | 점포 밀도 지도 | pydeck Scatterplot, 크기·색상(파랑→노랑→빨강) ∝ 점포 수 |
+
+UI 는 **`st.segmented_control`** 로 3화면을 전환한다 (기존 `st.tabs` 대비 **선택한 화면만** 렌더).
+
+### 2026-06 대시보드 성능 개선 (실데이터 30만 행+)
+
+배포 환경에서 **`Running...` 반복·화면 깜빡임·추이 탭 간헐적 미표시**가 보고되어 원인을 진단하고 `app.py` / `maps.py` 를 수정했다.
+
+| 원인 (진단) | 조치 |
+|---|---|
+| `st.tabs` 는 매 rerun 마다 3탭 코드 **전부** 실행 → pydeck·추이 I/O 항상 발생 | `segmented_control` + 조건부 렌더 |
+| `load_quarter_trend_data()` 캐시 없음 (~2.6s/회) | `@st.cache_data` + processed mtime 버전 키 |
+| pydeck `pickable=True` hover/click → rerun 루프 | `pickable=False` (`maps.py`) |
+| Plotly·Deck 매 rerun 재생성 | 차트/Deck 캐시, `@st.fragment` (지도·추이) |
 
 - **KPI/UI 분리**: `metrics.compute_kpi`, `filter_latest_quarter`, `aggregate_industry_by_quarter`, `aggregate_for_map`
 - **분기 라벨**: `metrics.format_quarter_label` — `20254` → `2025-4분기`
-- **샘플 데모**: `data/sample/` 2025년 4개 분기 Parquet로 API 키 없이 3탭 모두 동작
+- **샘플 데모**: `data/sample/` 2025년 4개 분기 Parquet로 API 키 없이 3화면 모두 동작
 
 ---
 
@@ -375,6 +388,9 @@ streamlit run app.py
 - [x] Streamlit Cloud 배포 가이드 (README)
 - [x] 분기별 sample Parquet (`src/sample_data.py`)
 - [x] `docs/architecture.png` 갱신 v3 (SVG·gen_infographic.py 포함, 구버전 `docs/archive/` v1·v2 보관)
+- [x] `TARGET_QUARTER` 쉼표 구분 다분기 — `run_pipeline.py` / `config.get_target_quarters()` (2025-06)
+- [x] 대시보드 rerun·깜빡임 완화 — `segmented_control`, 데이터/차트/Deck 캐시, `@st.fragment`, pydeck `pickable=False` (2026-06)
+- [x] 자체 서버 배포 가이드 — `deploy/start_on_1004.sh`, 포트 18080 (README)
 
 ### 남은 과제
 

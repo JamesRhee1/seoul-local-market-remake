@@ -80,7 +80,10 @@ def main() -> None:
     if not config.has_valid_api_key():
         logger.error("유효한 API 키가 없습니다. .env 의 SEOUL_API_KEY 를 설정하세요.")
         return
-    collect_store_data()
+    quarters = config.get_target_quarters() or config.DEMO_QUARTERS
+    for i, quarter in enumerate(quarters, start=1):
+        logger.info("--- 분기 %s (%d/%d) ---", quarter, i, len(quarters))
+        collect_store_data(quarter=quarter)
     collect_location_data()
 
 

@@ -113,8 +113,16 @@ def _read_int_env(key: str, default: int) -> int:
 
 SEOUL_API_KEY = _read_str_setting("SEOUL_API_KEY", "")
 COLLECT_LIMIT = _read_int_env("COLLECT_LIMIT", 20000)
-# 기준 년분기 코드 (예: 20254 = 2025년 4분기). 비우면 전체 분기 수집.
+# 기준 년분기 코드 (예: 20254). 쉼표로 여러 분기 지정 가능 (예: 20251,20252,20253,20254).
 TARGET_QUARTER = _read_str_setting("TARGET_QUARTER", "")
+
+
+def get_target_quarters() -> tuple[str, ...]:
+    """TARGET_QUARTER 를 파싱한다. 비어 있으면 빈 튜플."""
+    if not TARGET_QUARTER.strip():
+        return ()
+    return tuple(q.strip() for q in TARGET_QUARTER.split(",") if q.strip())
+
 
 # 키가 없거나 플레이스홀더면 미설정으로 간주
 _PLACEHOLDERS = {"", "YOUR_ACCESS_KEY_HERE", "여기에_인증키를_입력하세요"}

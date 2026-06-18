@@ -55,7 +55,8 @@ def store_density_deck(map_df: pd.DataFrame, title: str = "") -> pdk.Deck:
         get_position=f"[{COLS.LON}, {COLS.LAT}]",
         get_radius="radius",
         get_fill_color="color",
-        pickable=True,
+        # pickable=True 는 hover/click 시 Streamlit rerun 루프를 유발할 수 있어 비활성화.
+        pickable=False,
     )
     view_state = pdk.ViewState(
         latitude=float(plot_df[COLS.LAT].mean()),

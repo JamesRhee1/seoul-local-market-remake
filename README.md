@@ -120,7 +120,50 @@ python run_pipeline.py
 - `SEOUL_API_KEY` 가 설정되어 있으면 수집부터, 없으면 수집을 건너뛰고 기존 데이터로 진행합니다.
 - 각 단계는 `python -m src.collector`, `python -m src.preprocessor`, `python -m src.report` 로 개별 실행할 수도 있습니다.
 - 분석 기준 분기는 **2025년 1분기~4분기** (분기 코드 `20251`, `20252`, `20253`, `20254` / 최신 **2025-4분기**)입니다.
-- `TARGET_QUARTER` 를 바꿔가며 파이프라인을 반복 실행하면 `data/processed/seoul_market_*.parquet` 에 분기별 스냅샷이 축적됩니다.
+- `.env` 의 `TARGET_QUARTER` 에 **쉼표로 여러 분기**를 지정하면 `run_pipeline.py` 한 번으로 순차 수집·전처리합니다 (예: `20251,20252,20253,20254`).
+- `TARGET_QUARTER` 를 **비우면** API 전체 연도·분기를 수집하므로, 2025년만 필요할 때는 위 예시처럼 명시하는 것을 권장합니다. 비어 있고 API 키가 있으면 `run_pipeline.py` 는 **20251~20254** 를 기본 사용합니다.
+
+```bash
+# .env 예시 — 2025년 4분기 전체
+TARGET_QUARTER=20251,20252,20253,20254
+COLLECT_LIMIT=0
+```
+
+---
+
+## 자체 서버 배포 (Linux)
+
+집/실험실 PC 등에서 Streamlit 을 직접 띄우고 공유기 포트포워딩으로 외부 공개할 때:
+
+```bash
+git clone https://github.com/JamesRhee1/seoul-local-market-remake.git
+cd seoul-local-market-remake
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # SEOUL_API_KEY 등 입력
+
+# 데이터 (선택): python run_pipeline.py
+bash deploy/start_on_1004.sh   # 0.0.0.0:18080 기동
+```
+
+- `deploy/start_on_1004.sh` — venv 활성화, `.streamlit/config.toml`(port **18080**) 생성, Streamlit 백그라운드 기동
+- 공유기 **포트포워딩**: 외부 `18080` → 서버 LAN IP `18080` (TCP)
+- systemd 등록: `deploy/seoul-market-streamlit.service` 참고
+- **데이터 수집·전처리**는 대시보드와 분리해 실행하는 것을 권장합니다. 파이프라인 실행 중 `data/processed/` 가 갱신되면 대시보드 캐시가 무효화될 수 있습니다.
+
+### 대시보드 성능 (2026-06 갱신)
+
+실데이터(30만 행+) 환경에서 **화면 깜빡임·`Running...` 반복**을 줄이기 위해 `app.py` 에 다음을 적용했습니다.
+
+| 항목 | 내용 |
+|---|---|
+| 탭 UI | `st.tabs` → **`st.segmented_control`** — 선택한 화면만 렌더 (지도/추이 미선택 시 pydeck·추이 I/O 생략) |
+| 캐시 | `get_trend_data`, Plotly 차트, pydeck `Deck` — `@st.cache_data` / `@st.cache_resource` |
+| rerun 격리 | 지도·추이 — `@st.fragment` |
+| pydeck | `pickable=False` — hover/click 에 의한 rerun 루프 완화 (호버 툴팁 비활성) |
+| 위젯 | 사이드바·탭에 `key=` 고정 |
+
+---
 
 ### 데모용 샘플 데이터 생성
 
@@ -140,7 +183,7 @@ data/sample/seoul_market_20254.parquet
 data/sample/seoul_market_final.parquet
 ```
 
-API 키 없이도 **분기 추이·지도** 탭까지 데모할 수 있습니다 (`processed` 없을 때 `sample` 폴백).
+API 키 없이도 **분기 추이·지도** 화면까지 데모할 수 있습니다 (`processed` 없을 때 `sample` 폴백).
 
 ---
 
@@ -168,8 +211,8 @@ SEOUL_API_KEY = "your_key_here"
 # (선택) 수집 상한
 COLLECT_LIMIT = "20000"
 
-# (선택) 특정 분기만 수집
-TARGET_QUARTER = "20254"
+# (선택) 수집할 분기 — 쉼표로 여러 개 (2025년 1~4분기 예시)
+TARGET_QUARTER = "20251,20252,20253,20254"
 ```
 
 | 항목 | 로컬 | Streamlit Cloud |
@@ -212,7 +255,7 @@ TARGET_QUARTER = "20254"
 
 <!-- AUTO-INSIGHTS:START -->
 
-> 📂 아래 수치는 **실제 수집 데이터에서 자동 생성**되었습니다 — **최신 분기 `2025-4분기` 기준**, 점포 **75,985행** · 100개 업종 · 25개 자치구 · 1650개 상권. _(생성: 2026-06-12 15:06, `python -m src.report`)_
+> 📂 아래 수치는 **실제 수집 데이터에서 자동 생성**되었습니다 — **최신 분기 `2025-4분기` 기준**, 점포 **75,985행** · 100개 업종 · 25개 자치구 · 1650개 상권. _(생성: 2026-06-17 14:23, `python -m src.report`)_
 
 ### 1. 성장하는 업종 vs 쇠퇴하는 업종 — "지금 뜨는 시장 / 지는 시장"
 
@@ -223,8 +266,6 @@ TARGET_QUARTER = "20254"
 | 피부관리실 | 407 | 212 | **+195** | | 일반의류 | 417 | 1,032 | **−615** |
 | 슈퍼마켓 | 392 | 215 | **+177** | | 부동산중개업 | 13 | 448 | **−435** |
 | DVD방 | 122 | 6 | **+116** | | 전자상거래업 | 20 | 308 | **−288** |
-
-> 참고: `DVD방` 순증 수치는 서울 열린데이터 광장 원천 데이터의 업종 분류 기준을 그대로 집계한 결과입니다. 업종 코드 재분류나 원천 입력 방식의 영향이 있을 수 있어, 해석 시 이상치 가능성을 함께 고려하세요.
 
 → **인사이트:** 이번 분기 순증 1위는 **피부관리실**(+195), 순감소 1위는 **일반의류**(−615). 신규 창업·투자라면 순증 업종에, 리스크 관리라면 순감소 업종에 주목하게 됩니다.
 
@@ -422,7 +463,7 @@ copy .env.example .env
 |---|---|
 | `SEOUL_API_KEY` | 서울 열린데이터 광장 인증키 (데이터 수집 시 필요) |
 | `COLLECT_LIMIT` | 수집 기본 상한. `0` 또는 비우면 전체 수집 |
-| `TARGET_QUARTER` | 기준 년분기 코드(예: `20254` = 2025년 4분기). 비우면 전체 분기 수집 |
+| `TARGET_QUARTER` | 년분기 코드. **쉼표로 여러 분기** (예: `20251,20252,20253,20254`). 비우면 `run_pipeline.py` 가 20251~20254 사용. API `collector` 단독 실행 시 비우면 전체 연도 수집 |
 
 API 키 필요 여부는 다음과 같습니다.
 
@@ -453,7 +494,7 @@ API 키 필요 여부는 다음과 같습니다.
 
 | 파일 | 역할 |
 |---|---|
-| `app.py` | Streamlit 대시보드 진입점 (UI 조립) |
+| `app.py` | Streamlit 대시보드 (`segmented_control` 3화면, 캐시·`@st.fragment` 로 rerun 최소화) |
 | `src/config.py` | 경로, 서비스명, 컬럼명, 환경변수 설정 |
 | `src/utils.py` | 로깅 및 재시도/타임아웃 HTTP·페이지네이션 유틸 |
 | `src/collector.py` | 서울시 API 데이터 수집 → `data/raw` |
@@ -466,7 +507,7 @@ API 키 필요 여부는 다음과 같습니다.
 | `src/storage.py` | Parquet 저장·CSV 폴백 읽기 |
 | `src/geo.py` | 상권 TM 좌표 → WGS84 변환 |
 | `src/report.py` | 리포트/인사이트 생성 |
-| `run_pipeline.py` | 수집→전처리→README 갱신 일괄 실행 |
+| `run_pipeline.py` | 분기 목록(`TARGET_QUARTER`) 순회 — 수집→전처리→README 갱신 |
 
 데이터 스키마는 상권 코드(`TRDAR_CD`)를 조인 키로 하는 단순 Star Schema 구조입니다.
 
