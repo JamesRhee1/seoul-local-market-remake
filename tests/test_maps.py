@@ -60,6 +60,6 @@ def test_store_density_deck_zooms_to_seoul_bounds():
     )
     deck = store_density_deck(df)
     vs = deck.initial_view_state
-    assert 37.5 < vs.latitude < 37.6
-    assert 126.9 < vs.longitude < 127.0
-    assert vs.zoom >= 11.0
+    assert abs(vs.latitude - 37.5665) < 0.01
+    assert abs(vs.longitude - 126.9780) < 0.02
+    assert vs.zoom >= 11.8

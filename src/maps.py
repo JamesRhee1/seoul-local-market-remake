@@ -18,24 +18,40 @@ _COLOR_HIGH = (231, 76, 60)
 # 서울 전역 기본 뷰 (데이터 없을 때)
 _SEOUL_CENTER_LAT = 37.5665
 _SEOUL_CENTER_LON = 126.9780
-_DEFAULT_ZOOM = 11.5
+_DEFAULT_ZOOM = 12.0
+# 뷰 계산용 서울 대략 envelope (이상치 좌표가 줌을 넓히지 않도록)
+_SEOUL_LAT_BOUNDS = (37.43, 37.69)
+_SEOUL_LON_BOUNDS = (126.80, 127.17)
+_VIEW_PADDING = 1.05
+_ZOOM_OFFSET = 1.55
 
 
 def _view_state_from_bounds(lat: pd.Series, lon: pd.Series) -> pdk.ViewState:
-    """좌표 min/max 중앙값과 범위로 초기 뷰(중심·zoom)를 계산한다."""
-    lat_min, lat_max = float(lat.min()), float(lat.max())
-    lon_min, lon_max = float(lon.min()), float(lon.max())
+    """좌표 bounds 로 초기 뷰(서울 중심·zoom)를 계산한다."""
+    lat_min = max(float(lat.min()), _SEOUL_LAT_BOUNDS[0])
+    lat_max = min(float(lat.max()), _SEOUL_LAT_BOUNDS[1])
+    lon_min = max(float(lon.min()), _SEOUL_LON_BOUNDS[0])
+    lon_max = min(float(lon.max()), _SEOUL_LON_BOUNDS[1])
+
     center_lat = (lat_min + lat_max) / 2.0
     center_lon = (lon_min + lon_max) / 2.0
+    # 데이터가 서울 envelope 안이면 시청 부근 중심으로 스냅
+    if (
+        float(lat.min()) >= _SEOUL_LAT_BOUNDS[0]
+        and float(lat.max()) <= _SEOUL_LAT_BOUNDS[1]
+        and float(lon.min()) >= _SEOUL_LON_BOUNDS[0]
+        and float(lon.max()) <= _SEOUL_LON_BOUNDS[1]
+    ):
+        center_lat = _SEOUL_CENTER_LAT
+        center_lon = _SEOUL_CENTER_LON
 
     lat_span = max(lat_max - lat_min, 1e-4)
     lon_span = max(lon_max - lon_min, 1e-4)
     lon_span_lat = lon_span * math.cos(math.radians(center_lat))
-    span = max(lat_span, lon_span_lat) * 1.1
+    span = max(lat_span, lon_span_lat) * _VIEW_PADDING
 
-    # 서울 시내 데이터가 화면을 채우도록 zoom 보정 (외곽 경기도 여백 최소화)
-    zoom = math.log2(360.0 / span) + 1.0
-    zoom = float(max(11.0, min(13.0, zoom)))
+    zoom = math.log2(360.0 / span) + _ZOOM_OFFSET
+    zoom = float(max(11.8, min(13.2, zoom)))
 
     return pdk.ViewState(
         latitude=center_lat,

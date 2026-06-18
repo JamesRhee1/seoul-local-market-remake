@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 
 from . import config
 from .metrics import (
     format_quarter_short_label,
     sort_by_quarter,
+    sort_districts_by_net_change,
     total_store_fluctuation_caption,
 )
 
@@ -16,35 +16,37 @@ COLS = config.COLS
 
 _COLOR_OPEN = "#5DADE2"
 _COLOR_CLOSE = "#EC7063"
-_STATUS_LABELS = {COLS.OPEN_CO: "개업", COLS.CLOSE_CO: "폐업"}
 
 
 def district_open_close_bar(district_df: pd.DataFrame, title: str = "") -> go.Figure:
-    """자치구별 개업 vs 폐업 가로 그룹 막대그래프 (순증감 정렬 순서 유지)."""
-    district_order = district_df[COLS.DISTRICT].astype(str).tolist()
-    melted = district_df.melt(
-        id_vars=COLS.DISTRICT,
-        value_vars=[COLS.OPEN_CO, COLS.CLOSE_CO],
-        var_name="구분",
-        value_name="점포 수",
-    )
-    melted["구분"] = melted["구분"].map(_STATUS_LABELS)
-    melted[COLS.DISTRICT] = pd.Categorical(
-        melted[COLS.DISTRICT], categories=district_order, ordered=True
-    )
+    """자치구별 개업 vs 폐업 가로 그룹 막대그래프 (순증감 내림차순, 상단=순증)."""
+    sorted_df = sort_districts_by_net_change(district_df)
+    district_order = sorted_df[COLS.DISTRICT].astype(str).tolist()
+    # plotly y축: categoryarray 는 하단→상단 순 → 역순으로 상단에 순증 1위
+    y_axis_order = list(reversed(district_order))
 
-    fig = px.bar(
-        melted,
-        y=COLS.DISTRICT,
-        x="점포 수",
-        color="구분",
-        barmode="group",
-        orientation="h",
-        color_discrete_map={"개업": _COLOR_OPEN, "폐업": _COLOR_CLOSE},
-        title=title,
-        category_orders={COLS.DISTRICT: district_order},
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            y=district_order,
+            x=sorted_df[COLS.OPEN_CO],
+            name="개업",
+            orientation="h",
+            marker_color=_COLOR_OPEN,
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            y=district_order,
+            x=sorted_df[COLS.CLOSE_CO],
+            name="폐업",
+            orientation="h",
+            marker_color=_COLOR_CLOSE,
+        )
     )
     fig.update_layout(
+        title=title,
+        barmode="group",
         xaxis_title="점포 수",
         yaxis_title="자치구",
         legend_title_text="",
@@ -52,8 +54,7 @@ def district_open_close_bar(district_df: pd.DataFrame, title: str = "") -> go.Fi
         plot_bgcolor="rgba(0,0,0,0)",
         height=max(360, 28 * len(district_order)),
     )
-    # 순증감 1위 자치구가 차트 상단에 오도록
-    fig.update_yaxes(categoryorder="array", categoryarray=list(reversed(district_order)))
+    fig.update_yaxes(categoryorder="array", categoryarray=y_axis_order)
     return fig
 
 

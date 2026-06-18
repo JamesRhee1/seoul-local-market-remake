@@ -9,7 +9,6 @@ import pandas as pd
 
 from src import config
 from src.charts import district_open_close_bar, industry_trend_line
-from src.metrics import sort_districts_by_net_change
 
 COLS = config.COLS
 
@@ -26,26 +25,26 @@ def _district_df():
 
 def test_bar_chart_has_open_close_traces():
     fig = district_open_close_bar(_district_df(), title="테스트")
-    # 개업/폐업 두 시리즈가 그룹 막대로 그려져야 한다
     assert len(fig.data) == 2
     assert {t.name for t in fig.data} == {"개업", "폐업"}
     assert fig.layout.barmode == "group"
     assert fig.layout.title.text == "테스트"
     assert fig.data[0].orientation == "h"
+    # 입력 순서와 무관하게 순증감 내림차순 (강남구 +7 > 마포구 -2)
+    assert list(fig.data[0].y) == ["강남구", "마포구"]
 
 
 def test_bar_chart_y_axis_is_district_sorted_by_net():
     raw = pd.DataFrame(
         {
-            COLS.DISTRICT: ["마포구", "강남구"],
-            COLS.OPEN_CO: [5, 10],
-            COLS.CLOSE_CO: [7, 3],
+            COLS.DISTRICT: ["마포구", "강남구", "중구"],
+            COLS.OPEN_CO: [5, 10, 8],
+            COLS.CLOSE_CO: [7, 3, 1],
         }
     )
-    fig = district_open_close_bar(sort_districts_by_net_change(raw))
-    assert set(fig.data[0].y) == {"강남구", "마포구"}
-    # 순증감 1위(강남구)가 차트 상단 — categoryarray 는 하단→상단 순
-    assert list(fig.layout.yaxis.categoryarray) == ["마포구", "강남구"]
+    fig = district_open_close_bar(raw)
+    assert list(fig.data[0].y) == ["강남구", "중구", "마포구"]
+    assert list(fig.layout.yaxis.categoryarray) == ["마포구", "중구", "강남구"]
 
 
 def _trend_df():
