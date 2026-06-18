@@ -45,21 +45,21 @@ API 키나 대용량 데이터가 없어도, 저장소에 포함된 소형 샘�
 
 작동 중인 대시보드는 **[http://bigsoft.iptime.org:18080/](http://bigsoft.iptime.org:18080/)** 에서 확인할 수 있습니다. 아래는 동일 UI(`st.segmented_control` 3개 뷰)의 스크린샷입니다.
 
-사이드바에서 **업종·자치구·기준 분기(현황·지도)** / **추이 분기(추이 뷰)** 를 바꾸면 KPI·막대그래프·4개 분기 추이·점포 밀도 지도를 탐색할 수 있습니다. 예시는 **커피-음료 · 2025년 4분기** 기준입니다.
+사이드바에서 **업종·자치구·기준 분기(현황·지도)** / **추이 분기(추이 뷰)** 를 바꾸면 KPI·막대그래프·점포 밀도 지도·4개 분기 추이를 탐색할 수 있습니다. 예시는 **커피-음료 · 2025년 4분기** 기준입니다.
 
 ![2025 서울시 로컬 상권 분석 대시보드 — 현황 분석](docs/screenshots/dashboard_overview.png)
-
-<details>
-<summary>업종별 분기 추이 보기</summary>
-
-![2025 서울시 로컬 상권 분석 대시보드 — 업종별 분기 추이 (4개 분기)](docs/screenshots/dashboard_trend.png)
-
-</details>
 
 <details>
 <summary>점포 밀도 지도 보기</summary>
 
 ![2025 서울시 로컬 상권 분석 대시보드 — 점포 밀도 지도](docs/screenshots/dashboard_map.png)
+
+</details>
+
+<details>
+<summary>업종별 분기 추이 보기</summary>
+
+![2025 서울시 로컬 상권 분석 대시보드 — 업종별 분기 추이 (4개 분기)](docs/screenshots/dashboard_trend.png)
 
 </details>
 
@@ -74,7 +74,7 @@ API 키나 대용량 데이터가 없어도, 저장소에 포함된 소형 샘�
 - 총 점포 수 / 개업 / 폐업 KPI 카드 표시
 - 업종 및 자치구 기준 필터링
 - 자치구별 개업 vs 폐업 Plotly 막대그래프 시각화
-- **3개 뷰** — 현황 분석 / 업종별 분기 추이 / 점포 밀도 지도 (`st.segmented_control`)
+- **3개 뷰** — 현황 분석 / 점포 밀도 지도 / 업종별 분기 추이 (`st.segmented_control`)
 - **업종별 분기 추이** 2단 패널 차트 (2025년 1분기~4분기, 최신 `2025-4분기` 라벨)
 - **상권 단위 점포 밀도** pydeck 지도 (크기·색상 ∝ 밀도)
 - 원본 데이터 테이블 조회
