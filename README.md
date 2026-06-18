@@ -43,23 +43,23 @@ API 키나 대용량 데이터가 없어도, 저장소에 포함된 소형 샘�
 
 ## 대시보드 미리보기
 
-작동 중인 대시보드는 **[http://bigsoft.iptime.org:18080/](http://bigsoft.iptime.org:18080/)** 에서 확인할 수 있습니다. 아래는 동일 UI의 스크린샷입니다.
+작동 중인 대시보드는 **[http://bigsoft.iptime.org:18080/](http://bigsoft.iptime.org:18080/)** 에서 확인할 수 있습니다. 아래는 동일 UI(`st.segmented_control` 3개 뷰)의 스크린샷입니다.
 
-사이드바에서 업종·자치구·분기를 바꾸면 KPI, 자치구별 개업/폐업, 4개 분기 추이, 점포 밀도 지도를 한 화면 흐름으로 탐색할 수 있습니다.
+사이드바에서 **업종·자치구·기준 분기(현황·지도)** / **추이 분기(추이 뷰)** 를 바꾸면 KPI·막대그래프·4개 분기 추이·점포 밀도 지도를 탐색할 수 있습니다. 예시는 **커피-음료 · 2025년 4분기** 기준입니다.
 
-![서울시 로컬 상권 분석 대시보드 - 현황 분석](docs/screenshots/dashboard_overview.png)
+![2025 서울시 로컬 상권 분석 대시보드 — 현황 분석](docs/screenshots/dashboard_overview.png)
 
 <details>
 <summary>업종별 분기 추이 보기</summary>
 
-![서울시 로컬 상권 분석 대시보드 - 업종별 분기 추이](docs/screenshots/dashboard_trend.png)
+![2025 서울시 로컬 상권 분석 대시보드 — 업종별 분기 추이 (4개 분기)](docs/screenshots/dashboard_trend.png)
 
 </details>
 
 <details>
 <summary>점포 밀도 지도 보기</summary>
 
-![서울시 로컬 상권 분석 대시보드 - 점포 밀도 지도](docs/screenshots/dashboard_map.png)
+![2025 서울시 로컬 상권 분석 대시보드 — 점포 밀도 지도](docs/screenshots/dashboard_map.png)
 
 </details>
 
