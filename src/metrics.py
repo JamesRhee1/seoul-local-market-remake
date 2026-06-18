@@ -41,6 +41,11 @@ class Kpi:
     total_open: int
     total_close: int
 
+    @property
+    def net_change(self) -> int:
+        """순증감(개업−폐업)."""
+        return self.total_open - self.total_close
+
 
 def filter_data(
     df: pd.DataFrame,

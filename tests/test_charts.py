@@ -80,5 +80,11 @@ def test_trend_line_total_panel_shows_fluctuation_context():
     )
     fig = industry_trend_line(df)
     top_title = fig.layout.annotations[0].text
+    assert "총 점포 수" in top_title
     assert "변동폭" in top_title
     assert "100" in top_title
+    bottom_title = fig.layout.annotations[1].text
+    assert "개업 / 폐업" in bottom_title
+    assert "개업" in bottom_title and "폐업" in bottom_title
+    assert fig.data[0].showlegend is False
+    assert {t.name for t in fig.data if t.showlegend} == {"개업", "폐업"}

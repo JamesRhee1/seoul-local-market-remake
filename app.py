@@ -181,7 +181,7 @@ def _render_snapshot_tab(
 
     st.subheader(f"'{selected_industry}' 상권 현황")
     kpi = metrics.compute_kpi(filtered)
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4, gap="small")
     c1.metric("총 점포 수", f"{kpi.total_stores:,}개")
     c2.metric(
         "신규 개업",
@@ -192,6 +192,13 @@ def _render_snapshot_tab(
         "폐업",
         f"{kpi.total_close:,}개",
         delta=-kpi.total_close if kpi.total_close else None,
+    )
+    net = kpi.net_change
+    c4.metric(
+        "순증감 (개업−폐업)",
+        f"{net:,}개",
+        delta=net if net != 0 else None,
+        delta_color="normal",
     )
 
     st.divider()
@@ -286,7 +293,18 @@ def main() -> None:
         selected_trend_quarters = _render_trend_quarter_checkboxes(
             all_quarters, quarter_year
         )
-        st.sidebar.caption("기준 분기 = 현황·지도 / 추이 분기 = 추이 탭")
+        st.sidebar.info(
+            "📌 **기준 분기** → 현황·지도 뷰  \n"
+            "**추이 분기** → 추이 뷰"
+        )
+
+    demo_year = metrics.quarter_year(config.DEMO_QUARTERS[0])
+    demo_n = len(config.DEMO_QUARTERS)
+    st.sidebar.divider()
+    st.sidebar.caption(
+        f"데이터: [서울 열린데이터 광장](https://data.seoul.go.kr/) · "
+        f"{demo_year}년 1~{demo_n}분기"
+    )
 
     snapshot_df = (
         metrics.filter_by_quarter(df, selected_quarter)

@@ -52,6 +52,7 @@ def test_compute_kpi():
     assert kpi.total_stores == 35
     assert kpi.total_open == 7
     assert kpi.total_close == 3
+    assert kpi.net_change == 4
 
 
 def test_compute_kpi_empty():

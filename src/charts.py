@@ -65,16 +65,27 @@ def industry_trend_line(trend_df: pd.DataFrame, title: str = "") -> go.Figure:
     df["_분기라벨"] = df[COLS.QUARTER].astype(str).map(format_quarter_short_label)
     quarter_labels = df["_분기라벨"].tolist()
     fluctuation = total_store_fluctuation_caption(df)
-    total_panel_title = (
-        f"총 점포 수 — {fluctuation}" if fluctuation else "총 점포 수"
+    total_subtitle = (
+        f"<br><sup style='color:#5a6a7a;font-size:11px'>{fluctuation}</sup>"
+        if fluctuation
+        else ""
+    )
+    open_close_legend = (
+        f"<span style='color:{_COLOR_OPEN}'>●</span> 개업 &nbsp; "
+        f"<span style='color:{_COLOR_CLOSE}'>●</span> 폐업"
+    )
+    subplot_titles = (
+        f"<b>총 점포 수</b>{total_subtitle}",
+        f"<b>개업 / 폐업</b><br><sup style='color:#5a6a7a;font-size:11px'>"
+        f"{open_close_legend}</sup>",
     )
 
     fig = make_subplots(
         rows=2,
         cols=1,
         shared_xaxes=True,
-        subplot_titles=(total_panel_title, "개업 / 폐업"),
-        vertical_spacing=0.14,
+        subplot_titles=subplot_titles,
+        vertical_spacing=0.16,
     )
     fig.add_trace(
         go.Scatter(
@@ -84,6 +95,7 @@ def industry_trend_line(trend_df: pd.DataFrame, title: str = "") -> go.Figure:
             mode="lines+markers",
             line=dict(color="#2E86AB", width=2),
             marker=dict(size=8),
+            showlegend=False,
         ),
         row=1,
         col=1,
@@ -96,6 +108,7 @@ def industry_trend_line(trend_df: pd.DataFrame, title: str = "") -> go.Figure:
             mode="lines+markers",
             line=dict(color=_COLOR_OPEN, width=2),
             marker=dict(size=8),
+            showlegend=True,
         ),
         row=2,
         col=1,
@@ -108,6 +121,7 @@ def industry_trend_line(trend_df: pd.DataFrame, title: str = "") -> go.Figure:
             mode="lines+markers",
             line=dict(color=_COLOR_CLOSE, width=2),
             marker=dict(size=8),
+            showlegend=True,
         ),
         row=2,
         col=1,
@@ -115,10 +129,21 @@ def industry_trend_line(trend_df: pd.DataFrame, title: str = "") -> go.Figure:
     fig.update_layout(
         title=title,
         legend_title_text="",
-        margin=dict(t=80, b=40, l=20, r=20),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=0.46,
+            xanchor="left",
+            x=0.02,
+            bgcolor="rgba(255,255,255,0.85)",
+            bordercolor="#dddddd",
+            borderwidth=1,
+        ),
+        margin=dict(t=90, b=40, l=20, r=20),
         plot_bgcolor="rgba(0,0,0,0)",
-        height=520,
+        height=540,
     )
+    fig.update_annotations(font_size=13)
     xaxis_kw = dict(title_text="분기", categoryorder="array", categoryarray=quarter_labels)
     fig.update_yaxes(title_text="점포 수", row=1, col=1)
     fig.update_yaxes(title_text="점포 수", row=2, col=1)
