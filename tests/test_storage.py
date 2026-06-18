@@ -2,8 +2,15 @@
 from __future__ import annotations
 
 import pandas as pd
+import pytest
 
-from src.storage import list_quarter_snapshots, read_table, resolve_existing, write_table
+from src.storage import (
+    list_quarter_snapshots,
+    read_table,
+    resolve_existing,
+    verify_parquet_file,
+    write_table,
+)
 
 
 def test_write_and_read_parquet(tmp_path):
@@ -47,3 +54,23 @@ def test_list_quarter_snapshots_ignores_final_and_non_quarter_files(tmp_path):
     assert len(files) == 2
     quarters = {f.stem.removeprefix(prefix) for f in files}
     assert quarters == {"20251", "20252"}
+
+
+def test_verify_parquet_file_row_count(tmp_path):
+    path = tmp_path / "data.parquet"
+    pd.DataFrame({"a": [1, 2, 3]}).to_parquet(path, index=False)
+    assert verify_parquet_file(path, expected_rows=3) == 3
+
+
+def test_verify_parquet_file_detects_truncated(tmp_path):
+    path = tmp_path / "bad.parquet"
+    path.write_bytes(b"PAR1" + b"\x00" * 20)
+    with pytest.raises(ValueError, match="읽기 오류"):
+        verify_parquet_file(path)
+
+
+def test_write_table_verifies_after_save(tmp_path):
+    path = tmp_path / "data.csv"
+    df = pd.DataFrame({"a": [1, 2]})
+    saved = write_table(df, path)
+    assert verify_parquet_file(saved, expected_rows=2) == 2

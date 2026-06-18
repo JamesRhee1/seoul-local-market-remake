@@ -13,8 +13,10 @@ import pandas as pd
 from . import config
 from .preprocessor import normalize_processed_dtypes
 from .storage import list_quarter_snapshots, read_table, resolve_existing
+from .utils import get_logger
 
 COLS = config.COLS
+logger = get_logger(__name__)
 
 
 def _load_quarter_snapshots_from(directory: Path) -> pd.DataFrame:
@@ -50,9 +52,45 @@ def _normalize_loaded(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def _processed_final_path() -> Path | None:
+    return resolve_existing(config.PROCESSED_FILE)
+
+
+def _is_processed_final(path: Path) -> bool:
+    final = _processed_final_path()
+    if final is None:
+        return False
+    try:
+        return path.resolve() == final.resolve()
+    except OSError:
+        return path == final
+
+
+def _load_processed_snapshots_fallback() -> pd.DataFrame:
+    """processed final 읽기 실패 시 분기 스냅샷 concat 폴백."""
+    return _load_quarter_snapshots_from(config.PROCESSED_DIR)
+
+
 def load_market_data(path: Path) -> pd.DataFrame:
-    """Parquet/CSV 를 읽고 최소한의 방어적 정제를 적용한다."""
-    return _normalize_loaded(read_table(path))
+    """Parquet/CSV 를 읽고 최소한의 방어적 정제를 적용한다.
+
+    processed final 이 손상(truncated 등)된 경우 분기 스냅샷 concat 으로 폴백한다.
+    """
+    try:
+        return _normalize_loaded(read_table(path))
+    except Exception as exc:
+        if not _is_processed_final(path):
+            raise
+        logger.warning(
+            "processed final 로드 실패 (%s), 분기 스냅샷 concat 폴백 시도: %s",
+            path.name,
+            exc,
+        )
+        fallback = _load_processed_snapshots_fallback()
+        if fallback.empty:
+            raise
+        logger.info("분기 스냅샷 폴백 로드 성공 (%d행)", len(fallback))
+        return fallback
 
 
 def load_quarter_trend_data() -> pd.DataFrame:

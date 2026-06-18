@@ -37,6 +37,13 @@ def test_build_insights_contains_tables_and_scope():
     assert "커피-음료" in md
 
 
+def test_build_insights_includes_growth_net_footnote():
+    md = build_insights_markdown(_df())
+    assert "이상치 가능성을 함께 고려하세요" in md
+    assert "업종 코드 재분류" in md
+    assert "DVD방" not in md
+
+
 def test_representative_industry_prefers_coffee():
     md = build_insights_markdown(_df())
     assert "예: **커피-음료**" in md

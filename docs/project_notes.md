@@ -60,6 +60,7 @@ tags:
 - **실행 특성**:
   - 서울시 열린데이터 광장 API로 신규 데이터를 수집할 수 있다(키 필요).
   - 키나 대용량 데이터가 없어도 저장소에 포함된 **샘플 데이터로 데모 실행**이 가능하다.
+  - **라이브 데모**: [http://bigsoft.iptime.org:18080/](http://bigsoft.iptime.org:18080/) — 자체 서버(`deploy/start_on_1004.sh`, port 18080)에 배포된 Streamlit 인스턴스.
 - **구조 특성**: 데이터 수집·전처리·로딩·지표 계산·차트 생성을 `src/` 패키지로 분리한 모듈 구조.
 
 분석 단위는 자치구(`SIGNGU_CD_NM`), 업종(`SVC_INDUTY_CD_NM`), 점포 수(`STOR_CO`)와 개업/폐업 수(`OPBIZ_STOR_CO` / `CLSBIZ_STOR_CO`)이며, 상권 코드(`TRDAR_CD`)를 조인 키로 하는 단순 Star Schema 구조를 따른다.
@@ -118,11 +119,11 @@ tags:
 | API 키 관리 | 설정 파일 중심 | `.env` 기반(`config.py` + python-dotenv), 로그 키 마스킹 | 민감정보 관리 개선 |
 | 수집 안정성 | 타임아웃·재시도 개선 여지 | `utils.fetch_json` 타임아웃·재시도·지수 백오프 | 일시적 오류에 견고 |
 | 전처리 | 스크립트/함수 결합 | 순수 함수(`clean_numeric`/`build_dimension`/`merge_market_data`)와 I/O(`run`) 분리 | 재사용성·테스트 용이성 |
-| 시각화 | 앱 내부 로직 중심 | `charts`/`maps` 분리, 3탭(현황·추이·지도) | UI와 시각화 로직 분리 |
+| 시각화 | 앱 내부 로직 중심 | `charts`/`maps` 분리, 3개 뷰(현황·추이·지도) | UI와 시각화 로직 분리 |
 | 지표 계산 | 앱 내부 집계 | `metrics` 순수 함수(KPI/집계/옵션) | 단위 테스트 가능 |
 | 테스트 | 부족하거나 없음 | `pytest` 스위트 + GitHub Actions CI (ruff, 3.11/3.12) | 회귀 검증 자동화 |
 | 저장 포맷 | CSV 중심 | Parquet 저장 + CSV 폴백(`storage.py`) | I/O 효율·호환 |
-| 데이터 거버넌스 | 대용량 CSV 추적 가능성 | raw/processed Git 제외, sample Parquet(4분기) 포함 | 저장소 경량화 |
+| 데이터 거버넌스 | 대용량 CSV 추적 가능성 | raw/processed Git 제외, sample Parquet(2025년 1~4분기) 포함 | 저장소 경량화 |
 | 문서화 | 기능 설명 중심 | README(사용법) + 보고서(분석) 분리 | 전달력 향상 |
 
 ---
@@ -133,13 +134,17 @@ tags:
 
 ```text
 seoul-local-market-remake/
-├── app.py                  # Streamlit 진입점 (3탭 UI)
+├── app.py                  # Streamlit 진입점 (segmented_control 3개 뷰)
 ├── run_pipeline.py         # 수집→전처리→README 갱신 오케스트레이터
 ├── README.md
 ├── pyproject.toml          # ruff·pytest 설정 (CI와 동일 규칙)
 ├── requirements.txt
 ├── requirements-dev.txt    # pytest, ruff
 ├── .env.example
+├── deploy/                 # 자체 서버 배포 (README «자체 서버 배포» 참고)
+│   ├── start_on_1004.sh    # Streamlit 0.0.0.0:18080 백그라운드 기동
+│   ├── seoul-market-streamlit.service  # systemd 유닛
+│   └── setup_server.sh     # 최초 clone·venv·설치 안내
 ├── .github/
 │   └── workflows/
 │       └── ci.yml          # push/PR: ruff + pytest (3.11/3.12)
@@ -166,7 +171,7 @@ seoul-local-market-remake/
     ├── architecture.svg        # 벡터 원본
     ├── gen_infographic.py      # SVG/PNG 재생성
     ├── archive/                # 구버전 v1·v2
-    ├── screenshots/              # 대시보드 3탭 스크린샷 (README 미리보기)
+    ├── screenshots/              # 대시보드 3개 뷰 스크린샷 (README 미리보기)
     └── project_notes.md
 ```
 
@@ -174,7 +179,7 @@ seoul-local-market-remake/
 
 ![서울시 상권 분석 대시보드 — 데이터 파이프라인](architecture.png)
 
-- **현행** (`architecture.png` 1920×1080, `architecture.svg`): v3 — 5계층 파이프라인, `run_pipeline.py` 오케스트레이션, `geo.py`, sample 폴백, Streamlit 3탭, pytest·ruff·CI·Parquet 푸터. SVG는 `python docs/gen_infographic.py` 로 재생성 가능.
+- **현행** (`architecture.png` 1920×1080, `architecture.svg`): v3 — 5계층 파이프라인, `run_pipeline.py` 오케스트레이션, `geo.py`, sample 폴백, Streamlit 3개 뷰, `deploy/` 자체 서버 기동, pytest·ruff·CI·Parquet 푸터. SVG는 `python docs/gen_infographic.py` 로 재생성 가능.
 - **구버전** (`docs/archive/`): v1 초기 단선형, v2 오케스트레이터 도입판 (참고용 보관)
 
 폴더별 역할:
@@ -186,6 +191,7 @@ seoul-local-market-remake/
 | `data/raw`, `data/processed` | 수집 원본·가공 결과(대용량, Git 제외) |
 | `data/sample` | 2025년 1분기~4분기 소형 데모 Parquet 스냅샷 (분기 코드 `20251`, `20252`, `20253`, `20254`, Git 포함) |
 | `tests/` | 순수 함수 단위 테스트 |
+| `deploy/` | 자체 서버 Streamlit 기동(`start_on_1004.sh`, port 18080), systemd 유닛, 최초 설치 스크립트 |
 | `docs/` | 분석 보고서 등 문서 |
 
 ---
@@ -212,7 +218,8 @@ flowchart TD
     MET["📐 metrics.py"]:::analyze
     CHART["📊 charts.py"]:::analyze
     MAPS["🗺️ maps.py"]:::analyze
-    APP["🖥️ app.py (3탭)"]:::dashboard
+    APP["🖥️ app.py<br/>(3개 뷰)"]:::dashboard
+    DEPLOY["🚀 deploy/<br/>start_on_1004.sh<br/>systemd · :18080"]:::dashboard
 
     API --> COL
     ORCH ==>|제어| COL
@@ -228,6 +235,7 @@ flowchart TD
     MET --> MAPS
     CHART --> APP
     MAPS --> APP
+    DEPLOY -.->|기동/배포| APP
 
     classDef source fill:#E8F0FE,stroke:#4285F4,stroke-width:2px,color:#1a1a1a;
     classDef collect fill:#E6F4EA,stroke:#34A853,stroke-width:2px,color:#1a1a1a;
@@ -245,7 +253,8 @@ flowchart TD
 3. **processed 생성**: `preprocessor.run`이 병합·좌표(`geo.py`)·분기 스냅샷(`seoul_market_{분기}.parquet`)을 생성하고 합본 `seoul_market_final.parquet`를 만든다. 문서 기준은 2025년 1분기~4분기이며, `DEMO_QUARTERS` 밖 스냅샷이 섞이면 `report.py`가 경고를 남긴다.
 4. **sample 생성**: `python -m src.sample_data`로 processed에서 2025년 1~4분기 소형 샘플을 `data/sample/`에 복제한다.
 5. **sample fallback**: processed가 없으면 `data/sample` 분기 스냅샷으로 분기 추이·지도까지 데모 가능.
-6. **대시보드**: `app.py` 3탭 — 현황(KPI·막대), 분기 추이(2단 패널), 점포 밀도 지도(색상 그라데이션).
+6. **대시보드**: `app.py` — `st.segmented_control` 로 전환하는 **3개 뷰**(현황 KPI·막대 / 분기 추이 2단 패널 / 점포 밀도 지도).
+7. **자체 서버 배포**: `deploy/start_on_1004.sh`(또는 `seoul-market-streamlit.service`)로 `0.0.0.0:18080` 에 Streamlit 기동. 상세는 README «자체 서버 배포».
 
 > [!NOTE]
 > **오케스트레이션** — `run_pipeline.py`가 `.env` 의 `TARGET_QUARTER`(쉼표 구분, 예: `20251,20252,20253,20254`) 목록을 순회하며 **분기별** 수집→전처리 후, 마지막에 `report.update_readme` 를 한 번 실행한다. `TARGET_QUARTER` 가 비어 있으면 20251~20254 를 기본 사용한다. `preprocessor`는 report에 의존하지 않는다.
@@ -286,22 +295,22 @@ flowchart TD
 | 업종별 분기 추이 | 2단 패널(총 점포 / 개업·폐업), 분기 라인 차트 |
 | 점포 밀도 지도 | pydeck Scatterplot, 크기·색상(파랑→노랑→빨강) ∝ 점포 수 |
 
-UI 는 **`st.segmented_control`** 로 3화면을 전환한다 (기존 `st.tabs` 대비 **선택한 화면만** 렌더).
+UI 는 **`st.segmented_control`** 로 **3개 뷰**를 전환한다 (기존 `st.tabs` 대비 **선택한 뷰만** 렌더).
 
 ### 2026-06 대시보드 성능 개선 (실데이터 30만 행+)
 
-배포 환경에서 **`Running...` 반복·화면 깜빡임·추이 탭 간헐적 미표시**가 보고되어 원인을 진단하고 `app.py` / `maps.py` 를 수정했다.
+배포 환경에서 **`Running...` 반복·화면 깜빡임·추이 뷰 간헐적 미표시**가 보고되어 원인을 진단하고 `app.py` / `maps.py` 를 수정했다.
 
 | 원인 (진단) | 조치 |
 |---|---|
-| `st.tabs` 는 매 rerun 마다 3탭 코드 **전부** 실행 → pydeck·추이 I/O 항상 발생 | `segmented_control` + 조건부 렌더 |
+| `st.tabs` 는 매 rerun 마다 3개 뷰 코드 **전부** 실행 → pydeck·추이 I/O 항상 발생 | `segmented_control` + 조건부 렌더 |
 | `load_quarter_trend_data()` 캐시 없음 (~2.6s/회) | `@st.cache_data` + processed mtime 버전 키 |
 | pydeck `pickable=True` hover/click → rerun 루프 | `pickable=False` (`maps.py`) |
 | Plotly·Deck 매 rerun 재생성 | 차트/Deck 캐시, `@st.fragment` (지도·추이) |
 
 - **KPI/UI 분리**: `metrics.compute_kpi`, `filter_latest_quarter`, `aggregate_industry_by_quarter`, `aggregate_for_map`
 - **분기 라벨**: `metrics.format_quarter_label` — `20254` → `2025-4분기`
-- **샘플 데모**: `data/sample/` 2025년 4개 분기 Parquet로 API 키 없이 3화면 모두 동작
+- **샘플 데모**: `data/sample/` 2025년 1~4분기 Parquet로 API 키 없이 3개 뷰 모두 동작
 
 ---
 
@@ -315,18 +324,20 @@ ruff check .
 pytest
 python run_pipeline.py          # API 키 있을 때
 python -m src.sample_data       # processed → sample
-streamlit run app.py
+streamlit run app.py            # 로컬 개발
+bash deploy/start_on_1004.sh    # 자체 서버 (0.0.0.0:18080)
 ```
 
-최근 검증일: **2026-06-12** · 검증 명령: `pytest -q`, `ruff check .`
+최근 검증일: **2026-06-18** · 검증 명령: `pytest -q`, `ruff check .`
 
 | 명령 | 상태 |
 |---|---|
-| `pytest -q` | 전체 통과 (54 tests) |
+| `pytest -q` | 전체 통과 (66 tests) |
 | `ruff check .` | 통과 |
 | GitHub Actions | push/PR 시 Python 3.11/3.12 matrix |
-| `streamlit run app.py` | sample 4개 분기 Parquet로 3탭 데모 가능 |
-| README 대시보드 스크린샷 | `docs/screenshots/` 3탭 반영 |
+| `streamlit run app.py` | sample 2025년 1~4분기 Parquet로 3개 뷰 데모 가능 |
+| `bash deploy/start_on_1004.sh` | 자체 서버 Streamlit (:18080) |
+| README 대시보드 스크린샷 | `docs/screenshots/` 3개 뷰 반영 |
 
 재현성을 높인 요소:
 
@@ -378,7 +389,7 @@ streamlit run app.py
 
 ### 완료된 항목
 
-- [x] README 대시보드 3탭 스크린샷 추가 (현황 분석, 업종별 분기 추이, 점포 밀도 지도)
+- [x] README 대시보드 3개 뷰 스크린샷 추가 (현황 분석, 업종별 분기 추이, 점포 밀도 지도)
 - [x] README 목차·주요 데이터 컬럼 설명·MIT LICENSE 추가
 - [x] README와 본 문서의 모듈 수·분기 표현 정합성 정리 (12개 `src` 모듈 + `app.py`/`run_pipeline.py`)
 - [x] GitHub Actions CI (ruff + pytest, 3.11/3.12)
@@ -391,6 +402,7 @@ streamlit run app.py
 - [x] `TARGET_QUARTER` 쉼표 구분 다분기 — `run_pipeline.py` / `config.get_target_quarters()` (2025-06)
 - [x] 대시보드 rerun·깜빡임 완화 — `segmented_control`, 데이터/차트/Deck 캐시, `@st.fragment`, pydeck `pickable=False` (2026-06)
 - [x] 자체 서버 배포 가이드 — `deploy/start_on_1004.sh`, 포트 18080 (README)
+- [x] README·project_notes 용어 정합 — `st.segmented_control` 3개 뷰, `deploy/` 구조·플로우 반영 (2026-06)
 
 ### 남은 과제
 

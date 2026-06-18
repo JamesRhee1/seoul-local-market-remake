@@ -5,6 +5,10 @@ from pathlib import Path
 
 import pandas as pd
 
+from .utils import get_logger
+
+logger = get_logger(__name__)
+
 
 def parquet_path(path: Path) -> Path:
     """논리 경로(.csv)에 대응하는 Parquet 경로."""
@@ -39,11 +43,33 @@ def read_table(path: Path) -> pd.DataFrame:
     return pd.read_csv(resolved, low_memory=False)
 
 
+def verify_parquet_file(path: Path, expected_rows: int | None = None) -> int:
+    """Parquet 파일을 다시 읽어 무결성을 검증한다. 실제 행 수를 반환한다."""
+    try:
+        df = pd.read_parquet(path)
+    except Exception as exc:
+        raise ValueError(f"Parquet 검증 실패 (읽기 오류): {path} — {exc}") from exc
+    actual = len(df)
+    if expected_rows is not None and actual != expected_rows:
+        raise ValueError(
+            f"Parquet 검증 실패 (행수 불일치): {path} "
+            f"expected={expected_rows}, actual={actual}"
+        )
+    return actual
+
+
 def write_table(df: pd.DataFrame, path: Path) -> Path:
-    """Parquet 로 저장한다 (논리 경로는 .csv 기준)."""
+    """Parquet 로 저장한다 (논리 경로는 .csv 기준). 저장 직후 read-back 검증."""
     path.parent.mkdir(parents=True, exist_ok=True)
     out = parquet_path(path)
+    expected = len(df)
     df.to_parquet(out, index=False)
+    try:
+        verify_parquet_file(out, expected_rows=expected)
+    except ValueError as exc:
+        logger.error("%s", exc)
+        raise
+    logger.debug("Parquet 검증 완료: %s (%d행)", out.name, expected)
     return out
 
 

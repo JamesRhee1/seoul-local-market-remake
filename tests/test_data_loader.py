@@ -90,3 +90,26 @@ def test_load_quarter_trend_data_concatenates_snapshots(fake_paths):
     df = data_loader.load_quarter_trend_data()
     assert len(df) == 2
     assert sorted(df[COLS.QUARTER].astype(str).tolist()) == ["20253", "20254"]
+
+
+def test_load_market_data_falls_back_when_final_corrupt(fake_paths):
+    processed, _ = fake_paths
+    processed.parent.mkdir(parents=True, exist_ok=True)
+    # 손상된 final
+    processed.with_suffix(".parquet").write_bytes(b"PAR1truncated")
+    # 분기 스냅샷 2개
+    for quarter in ("20253", "20254"):
+        snap = processed.parent / f"{config.QUARTER_FILE_PREFIX}{quarter}.csv"
+        pd.DataFrame(
+            {
+                COLS.QUARTER: [quarter],
+                COLS.DISTRICT: ["강남구"],
+                COLS.STORE_CO: [10],
+                COLS.OPEN_CO: [1],
+                COLS.CLOSE_CO: [0],
+            }
+        ).to_csv(snap, index=False)
+
+    df = data_loader.load_market_data(processed.with_suffix(".parquet"))
+    assert len(df) == 2
+    assert sorted(df[COLS.QUARTER].astype(str).tolist()) == ["20253", "20254"]

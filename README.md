@@ -8,6 +8,8 @@
 
 서울시 열린데이터 광장의 상권 데이터를 **수집 → 전처리 → 분석 → 시각화**하는 Streamlit 대시보드 프로젝트입니다.
 
+**작동 중인 데모**는 [http://bigsoft.iptime.org:18080/](http://bigsoft.iptime.org:18080/) 에서 바로 확인할 수 있습니다.
+
 ## 목차
 
 - [프로젝트 개요](#프로젝트-개요)
@@ -41,6 +43,8 @@ API 키나 대용량 데이터가 없어도, 저장소에 포함된 소형 샘�
 
 ## 대시보드 미리보기
 
+작동 중인 대시보드는 **[http://bigsoft.iptime.org:18080/](http://bigsoft.iptime.org:18080/)** 에서 확인할 수 있습니다. 아래는 동일 UI의 스크린샷입니다.
+
 사이드바에서 업종·자치구·분기를 바꾸면 KPI, 자치구별 개업/폐업, 4개 분기 추이, 점포 밀도 지도를 한 화면 흐름으로 탐색할 수 있습니다.
 
 ![서울시 로컬 상권 분석 대시보드 - 현황 분석](docs/screenshots/dashboard_overview.png)
@@ -70,7 +74,7 @@ API 키나 대용량 데이터가 없어도, 저장소에 포함된 소형 샘�
 - 총 점포 수 / 개업 / 폐업 KPI 카드 표시
 - 업종 및 자치구 기준 필터링
 - 자치구별 개업 vs 폐업 Plotly 막대그래프 시각화
-- **3개 탭** — 현황 분석 / 업종별 분기 추이 / 점포 밀도 지도
+- **3개 뷰** — 현황 분석 / 업종별 분기 추이 / 점포 밀도 지도 (`st.segmented_control`)
 - **업종별 분기 추이** 2단 패널 차트 (2025년 1분기~4분기, 최신 `2025-4분기` 라벨)
 - **상권 단위 점포 밀도** pydeck 지도 (크기·색상 ∝ 밀도)
 - 원본 데이터 테이블 조회
@@ -124,7 +128,7 @@ python run_pipeline.py
 - `TARGET_QUARTER` 를 **비우면** API 전체 연도·분기를 수집하므로, 2025년만 필요할 때는 위 예시처럼 명시하는 것을 권장합니다. 비어 있고 API 키가 있으면 `run_pipeline.py` 는 **20251~20254** 를 기본 사용합니다.
 
 ```bash
-# .env 예시 — 2025년 4분기 전체
+# .env 예시 — 2025년 1~4분기
 TARGET_QUARTER=20251,20252,20253,20254
 COLLECT_LIMIT=0
 ```
@@ -133,7 +137,7 @@ COLLECT_LIMIT=0
 
 ## 자체 서버 배포 (Linux)
 
-집/실험실 PC 등에서 Streamlit 을 직접 띄우고 공유기 포트포워딩으로 외부 공개할 때:
+집/실험실 PC 등에서 Streamlit 을 직접 띄우고 공유기 포트포워딩으로 외부 공개할 때 사용합니다. **현재 배포 URL**: [http://bigsoft.iptime.org:18080/](http://bigsoft.iptime.org:18080/)
 
 ```bash
 git clone https://github.com/JamesRhee1/seoul-local-market-remake.git
@@ -157,11 +161,11 @@ bash deploy/start_on_1004.sh   # 0.0.0.0:18080 기동
 
 | 항목 | 내용 |
 |---|---|
-| 탭 UI | `st.tabs` → **`st.segmented_control`** — 선택한 화면만 렌더 (지도/추이 미선택 시 pydeck·추이 I/O 생략) |
+| 뷰 전환 | `st.tabs` → **`st.segmented_control`** — 선택한 뷰만 렌더 (지도/추이 미선택 시 pydeck·추이 I/O 생략) |
 | 캐시 | `get_trend_data`, Plotly 차트, pydeck `Deck` — `@st.cache_data` / `@st.cache_resource` |
 | rerun 격리 | 지도·추이 — `@st.fragment` |
 | pydeck | `pickable=False` — hover/click 에 의한 rerun 루프 완화 (호버 툴팁 비활성) |
-| 위젯 | 사이드바·탭에 `key=` 고정 |
+| 위젯 | 사이드바·뷰 전환에 `key=` 고정 |
 
 ---
 
@@ -255,7 +259,7 @@ TARGET_QUARTER = "20251,20252,20253,20254"
 
 <!-- AUTO-INSIGHTS:START -->
 
-> 📂 아래 수치는 **실제 수집 데이터에서 자동 생성**되었습니다 — **최신 분기 `2025-4분기` 기준**, 점포 **75,985행** · 100개 업종 · 25개 자치구 · 1650개 상권. _(생성: 2026-06-17 14:23, `python -m src.report`)_
+> 📂 아래 수치는 **실제 수집 데이터에서 자동 생성**되었습니다 — **최신 분기 `2025-4분기` 기준**, 점포 **75,985행** · 100개 업종 · 25개 자치구 · 1650개 상권. _(생성: 2026-06-18 14:15, `python -m src.report`)_
 
 ### 1. 성장하는 업종 vs 쇠퇴하는 업종 — "지금 뜨는 시장 / 지는 시장"
 
@@ -268,6 +272,8 @@ TARGET_QUARTER = "20251,20252,20253,20254"
 | DVD방 | 122 | 6 | **+116** | | 전자상거래업 | 20 | 308 | **−288** |
 
 → **인사이트:** 이번 분기 순증 1위는 **피부관리실**(+195), 순감소 1위는 **일반의류**(−615). 신규 창업·투자라면 순증 업종에, 리스크 관리라면 순감소 업종에 주목하게 됩니다.
+
+> 참고: `순증` 수치는 서울 열린데이터 광장 원천 데이터의 업종 분류 기준을 그대로 집계한 결과입니다. 업종 코드 재분류나 원천 입력 방식의 영향이 있을 수 있어, 해석 시 이상치 가능성을 함께 고려하세요.
 
 ### 2. 창업 리스크 — "여긴 들어가면 위험한 시장인가"
 
@@ -307,7 +313,7 @@ DB 없이 Parquet(레거시 CSV 폴백) 파일을 사용하며, `src/` 패키지
 </p>
 
 인포그래픽은 프로젝트 전체 구조를 5개 계층(외부 → ETL → 저장소 → 분석 → 대시보드)으로 정리한 것입니다.
-`run_pipeline.py` 오케스트레이션(점선), `geo.py` 좌표 변환, `sample` 폴백, Streamlit 3탭(현황/추이/지도)이 반영되어 있습니다.
+`run_pipeline.py` 오케스트레이션(점선), `geo.py` 좌표 변환, `sample` 폴백, Streamlit 3개 뷰(현황/추이/지도), `deploy/` 자체 서버 기동이 반영되어 있습니다.
 다이어그램 SVG는 [`docs/gen_infographic.py`](docs/gen_infographic.py)로 재생성할 수 있으며, README용 PNG(`docs/architecture.png`, 1920×1080)와 벡터 원본 [`docs/architecture.svg`](docs/architecture.svg)가 함께 제공됩니다.
 이전 버전은 [`docs/archive/`](docs/archive/)에 보관합니다 (v1: 초기 단선형, v2: 오케스트레이터 도입판).
 
@@ -317,7 +323,7 @@ DB 없이 Parquet(레거시 CSV 폴백) 파일을 사용하며, `src/` 패키지
 | **ETL 파이프라인** | 초록색 | `run_pipeline.py`, `collector.py`, `preprocessor.py`, `geo.py`, `storage.py` | 오케스트레이션, API 수집, Star Schema 병합(`TRDAR_CD`), TM→WGS84, Parquet I/O |
 | **데이터 저장소** | 노란색 | `data/raw/`, `data/processed/` (분기별 Parquet + final 합본), `data/sample/` | Parquet 우선·CSV 폴백. processed 우선, 없으면 sample 폴백 |
 | **분석** | 청록색 | `data_loader.py`, `metrics.py`, `charts.py`, `maps.py`, `report.py`, `sample_data.py` | 로딩, KPI·집계, Plotly/pydeck 시각화, README 인사이트, 데모 샘플 생성 |
-| **표현/UI** | 검정 | `app.py` (Streamlit, 3탭) | 현황·분기 추이·점포 밀도 지도, 사이드바 필터, KPI 카드 |
+| **표현/UI** | 검정 | `app.py` (Streamlit, 3개 뷰), `deploy/` | 현황·분기 추이·점포 밀도 지도, 사이드바 필터, KPI 카드; 자체 서버 `:18080` 기동 |
 
 - **실선 화살표**: API → 수집 → 전처리 → 저장소 → 로딩 → 분석 → 대시보드로 이어지는 주 데이터 흐름
 - **점선 화살표**: `run_pipeline.py` 제어 흐름, `processed` → `sample_data.py` → `data/sample/` 데모 복제, `data_loader` sample 폴백
@@ -346,7 +352,8 @@ flowchart TD
     CHART["📊 charts.py<br/>Plotly"]:::analyze
     MAPS["🗺️ maps.py<br/>pydeck"]:::analyze
     RPT["📝 report.py<br/>README 인사이트"]:::analyze
-    APP["🖥️ app.py<br/>3탭: 현황/추이/지도"]:::dashboard
+    APP["🖥️ app.py<br/>3개 뷰: 현황/추이/지도"]:::dashboard
+    DEPLOY["🚀 deploy/<br/>start_on_1004.sh<br/>systemd · :18080"]:::dashboard
 
     API --> COL
     ENV --> COL
@@ -366,6 +373,7 @@ flowchart TD
     MET --> MAPS
     CHART --> APP
     MAPS --> APP
+    DEPLOY -.->|기동/배포| APP
     ORCH ==>|제어| RPT
     PROC --> RPT
 
@@ -381,8 +389,8 @@ flowchart TD
 - `run_pipeline.py` 가 수집 → 전처리 → `report.update_readme` 순으로 파이프라인을 오케스트레이션합니다.
 - `collector.py` 가 API에서 점포(Fact)·위치(Dimension) 데이터를 수집해 `storage.py` 로 `data/raw` 에 저장합니다.
 - `preprocessor.py` 가 두 원천을 병합·정제하고, `geo.py` 가 TM 좌표를 WGS84로 변환한 뒤 분기 스냅샷·`final` 합본을 `data/processed` 에 씁니다.
-- `sample_data.py` 가 processed 분기 스냅샷에서 `data/sample/` 데모용 소형 Parquet을 생성합니다(API 키 없이 3탭 데모).
-- `data_loader.py` 가 processed(없으면 sample)를 읽고, `metrics.py`·`charts.py`·`maps.py` 가 KPI·차트·지도를 만들어 `app.py` 3탭에 표시합니다.
+- `sample_data.py` 가 processed 분기 스냅샷에서 `data/sample/` 데모용 소형 Parquet을 생성합니다(API 키 없이 3개 뷰 데모).
+- `data_loader.py` 가 processed(없으면 sample)를 읽고, `metrics.py`·`charts.py`·`maps.py` 가 KPI·차트·지도를 만들어 `app.py` 3개 뷰에 표시합니다.
 
 ---
 
@@ -390,13 +398,17 @@ flowchart TD
 
 ```text
 seoul-local-market-remake/
-├── app.py                  # Streamlit 대시보드 진입점 (3탭 UI 조립)
+├── app.py                  # Streamlit 대시보드 진입점 (segmented_control 3개 뷰)
 ├── README.md
 ├── pyproject.toml          # ruff/pytest 설정
 ├── requirements.txt
 ├── requirements-dev.txt    # pytest, ruff, requests-mock
 ├── .env.example            # API 키 템플릿
 ├── .gitignore
+├── deploy/                 # 자체 서버 배포 («자체 서버 배포» 참고)
+│   ├── start_on_1004.sh    # Streamlit 0.0.0.0:18080 백그라운드 기동
+│   ├── seoul-market-streamlit.service  # systemd 유닛
+│   └── setup_server.sh     # 최초 clone·venv·설치 안내
 ├── .github/
 │   └── workflows/
 │       └── ci.yml          # push/PR: ruff + pytest (3.11/3.12)
@@ -435,7 +447,7 @@ seoul-local-market-remake/
     ├── architecture.svg        # 벡터 원본
     ├── gen_infographic.py      # SVG/PNG 재생성 스크립트
     ├── archive/                # 구버전 (v1·v2)
-    ├── screenshots/            # 대시보드 3탭 스크린샷 (README 미리보기)
+    ├── screenshots/            # 대시보드 3개 뷰 스크린샷 (README 미리보기)
     └── project_notes.md
 ```
 
@@ -494,7 +506,7 @@ API 키 필요 여부는 다음과 같습니다.
 
 | 파일 | 역할 |
 |---|---|
-| `app.py` | Streamlit 대시보드 (`segmented_control` 3화면, 캐시·`@st.fragment` 로 rerun 최소화) |
+| `app.py` | Streamlit 대시보드 (`segmented_control` 3개 뷰, 캐시·`@st.fragment` 로 rerun 최소화) |
 | `src/config.py` | 경로, 서비스명, 컬럼명, 환경변수 설정 |
 | `src/utils.py` | 로깅 및 재시도/타임아웃 HTTP·페이지네이션 유틸 |
 | `src/collector.py` | 서울시 API 데이터 수집 → `data/raw` |

@@ -24,6 +24,13 @@ END_MARKER = "<!-- AUTO-INSIGHTS:END -->"
 
 _BIG_STORE_THRESHOLD = 500  # 폐업률 비교 시 표본이 너무 작은 업종 제외
 
+# 성장/쇠퇴 표 하단 각주 — AUTO-INSIGHTS 재생성 시에도 유지
+_GROWTH_NET_FOOTNOTE = (
+    "> 참고: `순증` 수치는 서울 열린데이터 광장 원천 데이터의 업종 분류 기준을 "
+    "그대로 집계한 결과입니다. 업종 코드 재분류나 원천 입력 방식의 영향이 있을 수 있어, "
+    "해석 시 이상치 가능성을 함께 고려하세요."
+)
+
 
 def _n(x: float | int) -> str:
     return f"{int(round(float(x))):,}"
@@ -152,6 +159,8 @@ def build_insights_markdown(df: pd.DataFrame) -> str:
     add(f"→ **인사이트:** 이번 분기 순증 1위는 **{top_growth}**({_signed(growth.iloc[0]['net'])}), "
         f"순감소 1위는 **{top_decline}**({_signed(decline.iloc[0]['net'])}). "
         f"신규 창업·투자라면 순증 업종에, 리스크 관리라면 순감소 업종에 주목하게 됩니다.")
+    add("")
+    add(_GROWTH_NET_FOOTNOTE)
     add("")
 
     add('### 2. 창업 리스크 — "여긴 들어가면 위험한 시장인가"')
