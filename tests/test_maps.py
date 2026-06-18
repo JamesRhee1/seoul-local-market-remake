@@ -2,7 +2,7 @@ import pandas as pd
 import pydeck as pdk
 
 from src import config
-from src.maps import density_color, store_density_deck
+from src.maps import density_color, density_legend_html, store_density_deck
 
 COLS = config.COLS
 
@@ -35,6 +35,15 @@ def test_store_density_deck_uses_per_point_color():
     assert "color" in str(deck.layers[0].get_fill_color)
     colors = df[COLS.STORE_CO].apply(lambda v: density_color(v, 5, 80))
     assert colors.iloc[0] != colors.iloc[-1]
+
+
+def test_density_legend_html_includes_gradient_and_size():
+    html = density_legend_html(5, 80)
+    assert "linear-gradient" in html
+    assert "저밀도" in html
+    assert "많음" in html
+    assert "5" in html
+    assert "80" in html
 
 
 def test_store_density_deck_zooms_to_seoul_bounds():

@@ -116,8 +116,7 @@ def _render_map_tab(
     )
     st.caption(
         f"{quarter_note}"
-        "상권 단위 점포 수 — 원 크기 ∝ 점포 수, "
-        "색상: 파랑(저밀도) → 노랑 → 빨강(고밀도)"
+        "상권 단위 점포 수 — 아래 범례 참고"
     )
     deck = get_density_deck(
         _map_signature(map_df),
@@ -125,6 +124,9 @@ def _render_map_tab(
         title=f"{selected_industry} 점포 밀도",
     )
     st.pydeck_chart(deck, use_container_width=True, key="store_density_map")
+    vmin = float(map_df[COLS.STORE_CO].min())
+    vmax = float(map_df[COLS.STORE_CO].max())
+    st.markdown(maps.density_legend_html(vmin, vmax), unsafe_allow_html=True)
 
 
 @st.fragment

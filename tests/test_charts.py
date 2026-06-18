@@ -9,6 +9,7 @@ import pandas as pd
 
 from src import config
 from src.charts import district_open_close_bar, industry_trend_line
+from src.metrics import sort_districts_by_net_change
 
 COLS = config.COLS
 
@@ -30,11 +31,21 @@ def test_bar_chart_has_open_close_traces():
     assert {t.name for t in fig.data} == {"개업", "폐업"}
     assert fig.layout.barmode == "group"
     assert fig.layout.title.text == "테스트"
+    assert fig.data[0].orientation == "h"
 
 
-def test_bar_chart_x_axis_is_district():
-    fig = district_open_close_bar(_district_df())
-    assert set(fig.data[0].x) == {"강남구", "마포구"}
+def test_bar_chart_y_axis_is_district_sorted_by_net():
+    raw = pd.DataFrame(
+        {
+            COLS.DISTRICT: ["마포구", "강남구"],
+            COLS.OPEN_CO: [5, 10],
+            COLS.CLOSE_CO: [7, 3],
+        }
+    )
+    fig = district_open_close_bar(sort_districts_by_net_change(raw))
+    assert set(fig.data[0].y) == {"강남구", "마포구"}
+    # 순증감 1위(강남구)가 차트 상단 — categoryarray 는 하단→상단 순
+    assert list(fig.layout.yaxis.categoryarray) == ["마포구", "강남구"]
 
 
 def _trend_df():
@@ -56,3 +67,18 @@ def test_trend_line_has_three_series_on_split_panels():
     # 총 점포는 상단, 개업/폐업은 하단 패널
     assert fig.data[0].yaxis == "y"
     assert fig.data[1].yaxis == "y2"
+
+
+def test_trend_line_total_panel_shows_fluctuation_context():
+    df = pd.DataFrame(
+        {
+            COLS.QUARTER: ["20251", "20252", "20253", "20254"],
+            COLS.STORE_CO: [16700, 16650, 16600, 16700],
+            COLS.OPEN_CO: [100, 90, 85, 110],
+            COLS.CLOSE_CO: [150, 140, 135, 120],
+        }
+    )
+    fig = industry_trend_line(df)
+    top_title = fig.layout.annotations[0].text
+    assert "변동폭" in top_title
+    assert "100" in top_title

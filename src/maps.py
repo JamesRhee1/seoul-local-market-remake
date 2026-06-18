@@ -107,3 +107,59 @@ def store_density_deck(map_df: pd.DataFrame, title: str = "") -> pdk.Deck:
         map_style="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
         description=title,
     )
+
+
+def _rgb_css(rgb: tuple[int, int, int]) -> str:
+    return f"rgb({rgb[0]}, {rgb[1]}, {rgb[2]})"
+
+
+def density_legend_html(vmin: float, vmax: float) -> str:
+    """점포 밀도 지도용 색상 그라데이션·원 크기 범례 HTML."""
+    low = _rgb_css(_COLOR_LOW)
+    mid = _rgb_css(_COLOR_MID)
+    high = _rgb_css(_COLOR_HIGH)
+    vmin_i = int(round(vmin))
+    vmax_i = int(round(vmax))
+    gradient = f"linear-gradient(to right, {low}, {mid}, {high})"
+    outer = (
+        "display:flex; flex-wrap:wrap; gap:28px; align-items:flex-end; "
+        "margin-top:10px; font-size:0.9rem; color:#333;"
+    )
+    bar = (
+        f"width:180px; height:14px; border-radius:6px; border:1px solid #ddd; "
+        f"background:{gradient};"
+    )
+    labels = (
+        "display:flex; justify-content:space-between; width:180px; "
+        "margin:4px 0 0 3.3em; font-size:0.78rem; color:#666;"
+    )
+    dot_sm = (
+        f"width:14px; height:14px; border-radius:50%; background:{mid}; "
+        "opacity:0.85; border:1px solid #ccc;"
+    )
+    dot_lg = (
+        f"width:30px; height:30px; border-radius:50%; background:{mid}; "
+        "opacity:0.85; border:1px solid #ccc;"
+    )
+    return f"""<div style="{outer}">
+  <div>
+    <div style="margin-bottom:6px; font-weight:600;">점포 밀도 (색상)</div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="min-width:2.5em; text-align:right;">{vmin_i}</span>
+      <div style="{bar}"></div>
+      <span style="min-width:2.5em;">{vmax_i}</span>
+    </div>
+    <div style="{labels}">
+      <span>저밀도</span><span>고밀도</span>
+    </div>
+  </div>
+  <div>
+    <div style="margin-bottom:6px; font-weight:600;">점포 수 (원 크기)</div>
+    <div style="display:flex; align-items:flex-end; gap:10px;">
+      <div style="{dot_sm}"></div>
+      <span style="font-size:0.82rem; margin-bottom:1px;">적음</span>
+      <div style="{dot_lg}"></div>
+      <span style="font-size:0.82rem; margin-bottom:1px;">많음</span>
+    </div>
+  </div>
+</div>"""

@@ -16,6 +16,8 @@ from src.metrics import (
     quarter_options,
     quarter_year,
     sort_by_quarter,
+    sort_districts_by_net_change,
+    total_store_fluctuation_caption,
 )
 
 COLS = config.COLS
@@ -61,6 +63,31 @@ def test_aggregate_by_district():
     agg = aggregate_by_district(filter_data(_df(), industry="커피-음료"))
     assert set(agg[COLS.DISTRICT]) == {"중구", "강남구"}
     assert agg[COLS.OPEN_CO].sum() == 6
+
+
+def test_sort_districts_by_net_change():
+    df = pd.DataFrame(
+        {
+            COLS.DISTRICT: ["마포구", "강남구", "중구"],
+            COLS.OPEN_CO: [5, 10, 8],
+            COLS.CLOSE_CO: [7, 3, 1],
+        }
+    )
+    sorted_df = sort_districts_by_net_change(df)
+    assert sorted_df[COLS.DISTRICT].tolist() == ["강남구", "중구", "마포구"]
+
+
+def test_total_store_fluctuation_caption():
+    df = pd.DataFrame(
+        {
+            COLS.QUARTER: ["20251", "20252"],
+            COLS.STORE_CO: [10000, 10150],
+            COLS.OPEN_CO: [1, 1],
+            COLS.CLOSE_CO: [0, 0],
+        }
+    )
+    caption = total_store_fluctuation_caption(df)
+    assert caption == "총 점포 변동폭 약 150개 / 1.5%"
 
 
 def test_options_sorted_unique():
