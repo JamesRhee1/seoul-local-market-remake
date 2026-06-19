@@ -26,9 +26,9 @@ _BIG_STORE_THRESHOLD = 500  # 폐업률 비교 시 표본이 너무 작은 업�
 
 # 성장/쇠퇴 표 하단 각주 — AUTO-INSIGHTS 재생성 시에도 유지
 _GROWTH_NET_FOOTNOTE = (
-    "> 참고: `순증` 수치는 서울 열린데이터 광장 원천 데이터의 업종 분류 기준을 "
-    "그대로 집계한 결과입니다. 업종 코드 재분류나 원천 입력 방식의 영향이 있을 수 있어, "
-    "해석 시 이상치 가능성을 함께 고려하세요."
+    "> ※ 순증 수치는 서울 열린데이터 광장 원천 분류 기준 집계로, "
+    "업종 코드 재분류·원천 입력 방식의 영향이 있을 수 있어 "
+    "이상치 가능성을 함께 고려하세요."
 )
 
 
@@ -121,14 +121,17 @@ def build_insights_markdown(df: pd.DataFrame) -> str:
         .agg(store=(C.STORE_CO, "sum"), open=(C.OPEN_CO, "sum"), close=(C.CLOSE_CO, "sum"))
     )
     rep_dist["net"] = rep_dist["open"] - rep_dist["close"]
-    rep_top = rep_dist.sort_values("store", ascending=False).head(3)
+    rep_dist["activity"] = rep_dist["open"] + rep_dist["close"]
+    # 대시보드 막대 차트와 동일: 활동량(개업+폐업) 내림차순
+    rep_top = rep_dist.sort_values("activity", ascending=False).head(3)
+    store_leader = rep_dist.sort_values("store", ascending=False).index[0]
 
     n_districts = df[C.DISTRICT].nunique()
     n_industries = df[C.INDUSTRY].nunique()
     n_areas = df[C.TRDAR_CD_NM].nunique() if C.TRDAR_CD_NM in df.columns else 0
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    # 입지 인사이트: 점포 1위 자치구와 순감 자치구를 대비해 "밀집 ≠ 좋은 입지"를 설명
+    # 입지 인사이트: 활동량 상위 자치구와 순증감 대비 (막대 차트 정렬과 정합)
     top_name = rep_top.index[0]
     top_row = rep_top.iloc[0]
     neg_in_top = rep_top[rep_top["net"] < 0]
@@ -179,7 +182,10 @@ def build_insights_markdown(df: pd.DataFrame) -> str:
 
     add('### 3. 입지/경쟁 강도 — "이 업종은 어느 자치구에 집중되나"')
     add("")
-    add(f"특정 업종을 선택하면 자치구별 점포 분포와 개·폐업이 한눈에 비교됩니다. 예: **{rep}**")
+    add(
+        f"특정 업종을 선택하면 자치구별 점포·개업·폐업을 비교할 수 있습니다 "
+        f"(대시보드 막대 차트와 동일하게 **활동량=개업+폐업** 상위 순). 예: **{rep}**"
+    )
     add("")
     add("| 자치구 | 점포 수 | 개업 | 폐업 | 순증 |")
     add("|---|--:|--:|--:|--:|")
@@ -189,27 +195,32 @@ def build_insights_markdown(df: pd.DataFrame) -> str:
     add("")
     if top_row["net"] < 0:
         add(
-            f"→ **인사이트:** **{top_name}**{_josa(top_name, '은', '는')} "
-            f"점포가 가장 많지만 순증 {_signed(top_row['net'])}로 폐업이 개업을 초과 — "
-            f"\"점포가 많다 = 좋은 입지\"가 아니라 "
-            f"**밀집도와 순증감을 함께 봐야** 한다는 점을 보여줍니다."
+            f"→ **인사이트:** 활동량 1위 **{top_name}**{_josa(top_name, '은', '는')} "
+            f"개업 {_n(top_row['open'])}·폐업 {_n(top_row['close'])}로 거래가 가장 활발하지만 "
+            f"순증 {_signed(top_row['net'])} — "
+            f"\"활동이 많다 = 좋은 입지\"가 아니라 **활동량과 순증감을 함께 봐야** 합니다."
         )
     elif not neg_in_top.empty:
         contrast_name = neg_in_top["net"].idxmin()
         contrast_net = neg_in_top.loc[contrast_name, "net"]
+        store_note = (
+            f" (점포 수 1위는 **{store_leader}**)"
+            if store_leader != top_name
+            else ""
+        )
         add(
-            f"→ **인사이트:** **{top_name}**{_josa(top_name, '은', '는')} "
-            f"점포 수 1위·순증 {_signed(top_row['net'])}인 반면, "
+            f"→ **인사이트:** 활동량 1위 **{top_name}**{_josa(top_name, '은', '는')} "
+            f"순증 {_signed(top_row['net'])}{store_note}인 반면, "
             f"**{contrast_name}**{_josa(contrast_name, '은', '는')} "
             f"순증 {_signed(contrast_net)}로 폐업이 개업을 앞섭니다 — "
-            f"\"점포가 많다 = 좋은 입지\"가 아니라 "
-            f"**밀집도와 순증감을 함께 봐야** 한다는 점을 보여줍니다."
+            f"막대 차트의 활동량 순서만으로 입지를 판단하기보다 "
+            f"**순증감을 함께 확인**해야 합니다."
         )
     else:
         add(
-            f"→ **인사이트:** **{top_name}**{_josa(top_name, '은', '는')} "
-            f"점포 수 상위권에서 순증 {_signed(top_row['net'])} — "
-            f"밀집 지역이라도 분기별 순증감을 함께 확인해야 합니다."
+            f"→ **인사이트:** 활동량 상위 **{top_name}**{_josa(top_name, '은', '는')} "
+            f"순증 {_signed(top_row['net'])} — "
+            f"활동이 많은 자치구라도 분기별 순증감을 함께 확인해야 합니다."
         )
 
     return "\n".join(lines)

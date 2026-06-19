@@ -39,6 +39,7 @@ def test_build_insights_contains_tables_and_scope():
 
 def test_build_insights_includes_growth_net_footnote():
     md = build_insights_markdown(_df())
+    assert "※ 순증 수치는" in md
     assert "이상치 가능성을 함께 고려하세요" in md
     assert "업종 코드 재분류" in md
     assert "DVD방" not in md
@@ -49,8 +50,8 @@ def test_representative_industry_prefers_coffee():
     assert "예: **커피-음료**" in md
 
 
-def test_location_insight_contrasts_top_store_with_negative_net():
-    """점포 1위는 순증이 양수여도, 상위권 중 순감 자치구와 대비해 설명한다."""
+def test_location_insight_aligns_with_activity_sort():
+    """입지 표·인사이트가 활동량(개업+폐업) 정렬과 맞고 순증 대비를 설명한다."""
     df = pd.DataFrame(
         {
             C.QUARTER: [20254] * 3,
@@ -63,9 +64,11 @@ def test_location_insight_contrasts_top_store_with_negative_net():
         }
     )
     md = build_insights_markdown(df)
-    assert "강남구" in md and "종로구" in md
-    assert "반면" in md
-    assert "−11" in md
+    assert "활동량=개업+폐업" in md
+    section = md.split("### 3. 입지/경쟁 강도")[1].split("<!--")[0]
+    assert section.index("강남구") < section.index("마포구") < section.index("종로구")
+    assert "활동량 1위 **강남구**" in md
+    assert "종로구" in md and "−11" in md
     assert "강남구는 점포가 가장 많지만 개업이 폐업을 상회" not in md
 
 
