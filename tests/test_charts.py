@@ -30,6 +30,8 @@ def test_bar_chart_has_open_close_traces():
     assert fig.layout.barmode == "group"
     assert fig.layout.title.text == "테스트"
     assert fig.data[0].orientation == "h"
+    assert fig.data[0].marker.color == config.CHART_COLOR_OPEN
+    assert fig.data[1].marker.color == config.CHART_COLOR_CLOSE
     # 입력 순서와 무관하게 순증감 내림차순 (강남구 +7 > 마포구 -2)
     assert list(fig.data[0].y) == ["강남구", "마포구"]
 
@@ -63,6 +65,8 @@ def test_trend_line_has_three_series_on_split_panels():
     assert len(fig.data) == 3
     assert {t.name for t in fig.data} == {"총 점포", "개업", "폐업"}
     assert fig.layout.title.text == "추이"
+    assert fig.data[1].line.color == config.CHART_COLOR_OPEN
+    assert fig.data[2].line.color == config.CHART_COLOR_CLOSE
     # 총 점포는 상단, 개업/폐업은 하단 패널
     assert fig.data[0].yaxis == "y"
     assert fig.data[1].yaxis == "y2"

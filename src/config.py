@@ -163,3 +163,9 @@ REQUIRED_LOCATION_COLS = (COLS.TRDAR_CD, COLS.DISTRICT)
 
 # 대시보드 기본 선택/리포트 대표 업종을 고르는 키워드 (업종명에 포함되면 우선 선택)
 DEFAULT_INDUSTRY_KEYWORD = "커피"
+
+# -----------------------------------------------------------------------------
+# 차트 색상 (개업=긍정 초록, 폐업=부정 빨강 — KPI delta 톤과 맞춤)
+# -----------------------------------------------------------------------------
+CHART_COLOR_OPEN = "#09AB4B"   # Streamlit metric positive delta green
+CHART_COLOR_CLOSE = "#FF4B4B"  # Streamlit metric negative delta red

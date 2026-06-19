@@ -14,8 +14,8 @@ from .metrics import (
 
 COLS = config.COLS
 
-_COLOR_OPEN = "#5DADE2"
-_COLOR_CLOSE = "#EC7063"
+_COLOR_OPEN = config.CHART_COLOR_OPEN
+_COLOR_CLOSE = config.CHART_COLOR_CLOSE
 
 
 def district_open_close_bar(district_df: pd.DataFrame, title: str = "") -> go.Figure:
