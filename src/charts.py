@@ -26,15 +26,7 @@ def district_open_close_bar(district_df: pd.DataFrame, title: str = "") -> go.Fi
     y_axis_order = list(reversed(district_order))
 
     fig = go.Figure()
-    fig.add_trace(
-        go.Bar(
-            y=district_order,
-            x=sorted_df[COLS.OPEN_CO],
-            name="개업",
-            orientation="h",
-            marker_color=_COLOR_OPEN,
-        )
-    )
+    # trace 추가 순서: 아래(폐업) → 위(개업). legendrank 로 범례는 개업·폐업 순 유지.
     fig.add_trace(
         go.Bar(
             y=district_order,
@@ -42,6 +34,17 @@ def district_open_close_bar(district_df: pd.DataFrame, title: str = "") -> go.Fi
             name="폐업",
             orientation="h",
             marker_color=_COLOR_CLOSE,
+            legendrank=2,
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            y=district_order,
+            x=sorted_df[COLS.OPEN_CO],
+            name="개업",
+            orientation="h",
+            marker_color=_COLOR_OPEN,
+            legendrank=1,
         )
     )
     fig.update_layout(
