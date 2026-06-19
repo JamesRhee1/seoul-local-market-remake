@@ -74,14 +74,9 @@ def industry_trend_line(trend_df: pd.DataFrame, title: str = "") -> go.Figure:
         if fluctuation
         else ""
     )
-    open_close_legend = (
-        f"<span style='color:{_COLOR_OPEN}'>●</span> 개업 &nbsp; "
-        f"<span style='color:{_COLOR_CLOSE}'>●</span> 폐업"
-    )
     subplot_titles = (
         f"<b>총 점포 수</b>{total_subtitle}",
-        f"<b>개업 / 폐업</b><br><sup style='color:#5a6a7a;font-size:11px'>"
-        f"{open_close_legend}</sup>",
+        "<b>개업 / 폐업</b>",
     )
 
     fig = make_subplots(
