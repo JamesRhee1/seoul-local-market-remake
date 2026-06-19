@@ -8,7 +8,7 @@ from . import config
 from .metrics import (
     format_quarter_short_label,
     sort_by_quarter,
-    sort_districts_by_net_change,
+    sort_districts_by_activity,
     total_store_fluctuation_caption,
 )
 
@@ -19,10 +19,10 @@ _COLOR_CLOSE = config.CHART_COLOR_CLOSE
 
 
 def district_open_close_bar(district_df: pd.DataFrame, title: str = "") -> go.Figure:
-    """자치구별 개업 vs 폐업 가로 그룹 막대그래프 (순증감 내림차순, 상단=순증)."""
-    sorted_df = sort_districts_by_net_change(district_df)
+    """자치구별 개업 vs 폐업 가로 그룹 막대그래프 (활동량 내림차순, 상단=활동 많음)."""
+    sorted_df = sort_districts_by_activity(district_df)
     district_order = sorted_df[COLS.DISTRICT].astype(str).tolist()
-    # plotly y축: categoryarray 는 하단→상단 순 → 역순으로 상단에 순증 1위
+    # plotly y축: categoryarray 는 하단→상단 순 → 역순으로 상단에 활동량 1위
     y_axis_order = list(reversed(district_order))
 
     fig = go.Figure()

@@ -208,8 +208,10 @@ def _render_snapshot_tab(
     if district_df.empty:
         st.warning("조건에 해당하는 데이터가 없습니다.")
     else:
+        st.caption("자치구 정렬: **개업+폐업 합계(활동량)** 내림차순 — 활동이 많은 자치구가 위쪽")
         fig = get_district_chart(
-            district_df, title=f"{selected_industry} 자치구별 현황"
+            district_df,
+            title=f"{selected_industry} 자치구별 현황 (활동량 순)",
         )
         st.plotly_chart(fig, use_container_width=True, key="district_bar_chart")
 

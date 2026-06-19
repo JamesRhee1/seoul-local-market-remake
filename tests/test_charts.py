@@ -34,11 +34,11 @@ def test_bar_chart_has_open_close_traces():
     assert fig.data[1].name == "개업"
     assert fig.data[0].marker.color == config.CHART_COLOR_CLOSE
     assert fig.data[1].marker.color == config.CHART_COLOR_OPEN
-    # 입력 순서와 무관하게 순증감 내림차순 (강남구 +7 > 마포구 -2)
+    # 입력 순서와 무관하게 활동량(개업+폐업) 내림차순
     assert list(fig.data[1].y) == ["강남구", "마포구"]
 
 
-def test_bar_chart_y_axis_is_district_sorted_by_net():
+def test_bar_chart_y_axis_is_district_sorted_by_activity():
     raw = pd.DataFrame(
         {
             COLS.DISTRICT: ["마포구", "강남구", "중구"],
@@ -47,8 +47,8 @@ def test_bar_chart_y_axis_is_district_sorted_by_net():
         }
     )
     fig = district_open_close_bar(raw)
-    assert list(fig.data[1].y) == ["강남구", "중구", "마포구"]
-    assert list(fig.layout.yaxis.categoryarray) == ["마포구", "중구", "강남구"]
+    assert list(fig.data[1].y) == ["강남구", "마포구", "중구"]
+    assert list(fig.layout.yaxis.categoryarray) == ["중구", "마포구", "강남구"]
 
 
 def _trend_df():

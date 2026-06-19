@@ -16,7 +16,7 @@ from src.metrics import (
     quarter_options,
     quarter_year,
     sort_by_quarter,
-    sort_districts_by_net_change,
+    sort_districts_by_activity,
     total_store_fluctuation_caption,
 )
 
@@ -64,9 +64,11 @@ def test_aggregate_by_district():
     agg = aggregate_by_district(filter_data(_df(), industry="커피-음료"))
     assert set(agg[COLS.DISTRICT]) == {"중구", "강남구"}
     assert agg[COLS.OPEN_CO].sum() == 6
+    # 활동량(개업+폐업) 내림차순: 강남구 6 > 중구 3
+    assert agg[COLS.DISTRICT].tolist() == ["강남구", "중구"]
 
 
-def test_sort_districts_by_net_change():
+def test_sort_districts_by_activity():
     df = pd.DataFrame(
         {
             COLS.DISTRICT: ["마포구", "강남구", "중구"],
@@ -74,8 +76,9 @@ def test_sort_districts_by_net_change():
             COLS.CLOSE_CO: [7, 3, 1],
         }
     )
-    sorted_df = sort_districts_by_net_change(df)
-    assert sorted_df[COLS.DISTRICT].tolist() == ["강남구", "중구", "마포구"]
+    sorted_df = sort_districts_by_activity(df)
+    # 활동량: 강남 13, 마포 12, 중구 9
+    assert sorted_df[COLS.DISTRICT].tolist() == ["강남구", "마포구", "중구"]
 
 
 def test_total_store_fluctuation_caption():

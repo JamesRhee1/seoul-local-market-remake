@@ -73,7 +73,7 @@ def compute_kpi(df: pd.DataFrame) -> Kpi:
 
 
 def aggregate_by_district(df: pd.DataFrame) -> pd.DataFrame:
-    """자치구별 개업/폐업 합계를 집계하고 순증감(개업−폐업) 내림차순으로 정렬한다."""
+    """자치구별 개업/폐업 합계를 집계하고 활동량(개업+폐업) 내림차순으로 정렬한다."""
     if df.empty:
         return pd.DataFrame(columns=[COLS.DISTRICT, COLS.OPEN_CO, COLS.CLOSE_CO])
     agg = (
@@ -81,19 +81,19 @@ def aggregate_by_district(df: pd.DataFrame) -> pd.DataFrame:
         .sum()
         .reset_index()
     )
-    return sort_districts_by_net_change(agg)
+    return sort_districts_by_activity(agg)
 
 
-def sort_districts_by_net_change(district_df: pd.DataFrame) -> pd.DataFrame:
-    """자치구 집계표를 순증감(개업−폐업) 내림차순으로 정렬한다."""
+def sort_districts_by_activity(district_df: pd.DataFrame) -> pd.DataFrame:
+    """자치구 집계표를 활동량(개업+폐업 합계) 내림차순으로 정렬한다."""
     if district_df.empty:
         return district_df
     out = district_df.copy()
-    net = out[COLS.OPEN_CO] - out[COLS.CLOSE_CO]
+    activity = out[COLS.OPEN_CO] + out[COLS.CLOSE_CO]
     return (
-        out.assign(_net=net)
-        .sort_values("_net", ascending=False)
-        .drop(columns="_net")
+        out.assign(_activity=activity)
+        .sort_values("_activity", ascending=False)
+        .drop(columns="_activity")
         .reset_index(drop=True)
     )
 
